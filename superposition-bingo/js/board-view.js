@@ -31,6 +31,7 @@
       this.cells = [];
       this.selected = null; // setup 모드: { cell, slot }
       this.winCells = new Set();
+      this.probs = null;    // 확률 미터: 칸별 확률 (끄면 null)
     }
 
     setBoard(board) {
@@ -55,6 +56,7 @@
           btn.addEventListener('click', () => this.onCell(i));
           cell.values.forEach((_, s) => btn.append(el('span', `val val-${SLOT_NAMES[s]}`)));
           if (cell.super) btn.append(el('span', 'burst'));
+          btn.append(el('span', 'prob'));
           node.append(btn);
         }
         this.container.append(node);
@@ -65,6 +67,11 @@
 
     select(cellIdx, slot) {
       this.selected = cellIdx == null ? null : { cell: cellIdx, slot };
+      this.refresh();
+    }
+
+    setProbs(probs) {
+      this.probs = probs;
       this.refresh();
     }
 
@@ -105,6 +112,11 @@
       node.classList.toggle('is-marked', cell.marked);
       node.classList.toggle('is-collapsed', cell.super && cell.marked);
       node.classList.toggle('is-win', this.winCells.has(i));
+
+      const p = this.probs ? this.probs[i] : null;
+      btn.querySelector('.prob').textContent = p == null ? '' : `${Math.round(p * 100)}%`;
+      node.classList.toggle('has-prob', p != null);
+      node.style.setProperty('--p', p == null ? 0 : p);
 
       let label = `${position(i)}, `;
       if (cell.super) {

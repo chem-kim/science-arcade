@@ -9,10 +9,13 @@
   const R = global.SBRules;
   const { toast, retrigger, sub, position, renderHistory } = global.SBUI;
   const MARK_TIMEOUT_MS = 30000;
+  const METER_KEY = 'sb-meter';
+  const pct = p => `${Math.round(p * 100)}%`;
 
   class Marker {
     /**
-     * els: { board, caller, pending, states, history, progress }
+     * els: { board, caller, pending, states, history, progress, meter }
+     *   meter: { toggle, body, fill, fillBar, bingo, bingoBar, expected } (확률 미터, 선택)
      * hooks: { onMark(index, n, auto), onBingo(lines) }
      */
     constructor(els, hooks = {}) {
@@ -24,6 +27,40 @@
       this.pending = new Map(); // 숫자 → { index, deadline }
       this.finished = false;
       this.timer = null;
+      this.bindMeter();
+    }
+
+    bindMeter() {
+      const m = this.els.meter;
+      if (!m) return;
+      try { m.toggle.checked = localStorage.getItem(METER_KEY) === 'on'; } catch (e) { /* 저장소 없음 */ }
+      m.toggle.addEventListener('change', () => {
+        try { localStorage.setItem(METER_KEY, m.toggle.checked ? 'on' : 'off'); } catch (e) { /* 저장소 없음 */ }
+        this.renderMeter();
+      });
+    }
+
+    /**
+     * 확률 미터: 학생이 "아는 것" 기준으로 계산한다.
+     * 아직 누르지 않은 측정은 빼고 계산해야, 미터가 어느 칸을 눌러야 하는지 알려주지 않는다.
+     */
+    renderMeter() {
+      const m = this.els.meter;
+      if (!m || !this.board) return;
+      m.body.hidden = !m.toggle.checked;
+      if (!m.toggle.checked) {
+        if (this.view.probs) this.view.setProbs(null);
+        return;
+      }
+      const visible = this.board.map(c => ({ values: c.values, result: c.marked ? c.result : null }));
+      const calls = this.calls.filter(n => !this.pending.has(n));
+      const pr = R.probabilities(visible, calls);
+      this.view.setProbs(pr.done ? null : pr.cell);
+      m.fill.textContent = pct(pr.fillNext);
+      m.fillBar.style.transform = `scaleX(${pr.fillNext})`;
+      m.bingo.textContent = pct(pr.bingoNext);
+      m.bingoBar.style.transform = `scaleX(${pr.bingoNext})`;
+      m.expected.textContent = pr.done ? '빙고!' : pr.left ? `약 ${pr.expected.toFixed(1)}번` : '-';
     }
 
     start(board) {
@@ -131,6 +168,7 @@
       if (this.els.history) renderHistory(this.els.history, this.calls);
       if (this.els.progress) this.els.progress.textContent = `측정 ${this.calls.length} / ${R.MAX_NUMBER}`;
       this.renderStates();
+      this.renderMeter();
     }
 
     renderPending() {

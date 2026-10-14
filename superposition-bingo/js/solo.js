@@ -25,6 +25,15 @@
     states: $('#state-list'),
     history: $('#history-grid'),
     progress: $('#play-progress'),
+    meter: {
+      toggle: $('#meter-toggle'),
+      body: $('#meter-body'),
+      fill: $('#meter-fill'),
+      fillBar: $('#meter-fill-bar'),
+      bingo: $('#meter-bingo'),
+      bingoBar: $('#meter-bingo-bar'),
+      expected: $('#meter-expected'),
+    },
   }, {
     onBingo: lines => {
       marker.stop();

@@ -116,9 +116,57 @@
     return sorted.map(e => ({ ...e, rank: sorted.findIndex(x => x.call === e.call) + 1 }));
   }
 
+  /**
+   * 확률 미터: 남은 숫자가 무작위로 측정된다고 가정한 확률
+   * board: 칸 객체 배열(result가 있으면 이미 확정), calls: 지금까지 측정된 숫자
+   * 반환 { cell: 칸별 다음 측정에 채워질 확률(확정된 칸은 null), fillNext, bingoNext, expected, left }
+   */
+  function probabilities(board, calls, trials = 400) {
+    const called = new Set(calls);
+    const remaining = range(1, MAX_NUMBER).filter(n => !called.has(n));
+    const left = remaining.length;
+    const open = board.map(c => c.result == null);
+    const cell = board.map((c, i) => (open[i] && left ? c.values.filter(v => !called.has(v)).length / left : null));
+
+    const onBoard = new Set();
+    board.forEach((c, i) => { if (open[i]) c.values.forEach(v => onBoard.add(v)); });
+    const fillNext = left ? onBoard.size / left : 0;
+
+    // 한 칸만 남은 줄들의 마지막 칸 숫자 → 그중 하나가 나오면 빙고
+    const done = LINES.some(line => line.every(i => !open[i]));
+    const winning = new Set();
+    LINES.forEach(line => {
+      const rest = line.filter(i => open[i]);
+      if (rest.length === 1) board[rest[0]].values.forEach(v => winning.add(v));
+    });
+    const bingoNext = done ? 1 : left ? winning.size / left : 0;
+
+    // 몬테카를로: 빙고까지 앞으로 몇 번 더 측정해야 하는지 평균
+    let expected = 0;
+    if (!done && left) {
+      const cellOf = new Map();
+      board.forEach((c, i) => { if (open[i]) c.values.forEach(v => cellOf.set(v, i)); });
+      let total = 0;
+      for (let t = 0; t < trials; t++) {
+        const filled = open.map(o => !o);
+        let steps = 0;
+        for (const n of shuffle(remaining)) {
+          steps++;
+          const i = cellOf.get(n);
+          if (i == null || filled[i]) continue;
+          filled[i] = true;
+          if (LINES.some(line => line.includes(i) && line.every(j => filled[j]))) break;
+        }
+        total += steps;
+      }
+      expected = total / trials;
+    }
+    return { cell, fillNext, bingoNext, expected, left, done };
+  }
+
   global.SBRules = {
     SIZE, CELL_COUNT, MAX_NUMBER, DEFAULT_SUPER_COUNT, LINES,
     shuffle, range, createBoard, boardFromValues, usedNumbers, isComplete, autoFill, measure, completedLines,
-    fillOrder, bingoCallIndex, cellsToBingo, rankByCall,
+    fillOrder, bingoCallIndex, cellsToBingo, rankByCall, probabilities,
   };
 })(window);

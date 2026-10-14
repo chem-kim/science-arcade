@@ -429,3 +429,55 @@ dialog h2 {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* ---------- 확률 미터 ---------- */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.meter-head { display: flex; align-items: center; justify-content: space-between; }
+.meter-head h2 { margin: 0; }
+.switch { position: relative; display: inline-block; cursor: pointer; }
+.switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.switch-track {
+  display: block; width: 52px; height: 30px; border-radius: 999px; background: #eadff0;
+  position: relative; transition: background .2s;
+}
+.switch-track::after {
+  content: ""; position: absolute; left: 4px; top: 4px; width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; box-shadow: 0 2px 6px rgba(120, 60, 120, .25); transition: transform .2s;
+}
+.switch input:checked + .switch-track { background: linear-gradient(90deg, var(--state-a), var(--state-b)); }
+.switch input:checked + .switch-track::after { transform: translateX(22px); }
+.switch input:focus-visible + .switch-track { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+#meter-body { margin-top: 12px; }
+.meter-legend { margin: 0 0 12px; font-size: .85rem; color: var(--muted); line-height: 1.5; }
+.meter-legend b { color: #a35fd6; }
+.meter-stats { margin: 0; display: grid; gap: 10px; }
+.meter-stats > div { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 8px; }
+.meter-stats dt { font-size: .85rem; color: var(--muted); }
+.meter-stats dd { margin: 0; font-family: var(--font-round); font-size: 1.3rem; color: #a35fd6; font-variant-numeric: tabular-nums; }
+.meter-bar { grid-column: 1 / -1; height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.meter-bar i {
+  display: block; height: 100%; transform-origin: left; transform: scaleX(0); transition: transform .5s ease;
+  background: linear-gradient(90deg, var(--state-a), var(--state-b));
+}
+.meter-note { margin: 12px 0 0; font-size: .75rem; color: var(--muted); }
+
+/* 칸별 확률 배지 */
+.prob {
+  position: absolute; left: 50%; bottom: 4%; transform: translateX(-50%);
+  font-family: var(--font); font-size: .42em; font-weight: 700; line-height: 1;
+  padding: .2em .45em; border-radius: 999px; pointer-events: none;
+  color: #7a5aa8; background: rgba(255, 255, 255, .85); opacity: 0; transition: opacity .3s;
+}
+.cell.has-prob .prob { opacity: 1; }
+.cell.is-super.has-prob .prob { color: #fff; background: linear-gradient(90deg, var(--state-a), var(--state-b)); left: 74%; bottom: auto; top: 8%; }
+.cell.has-prob:not(.is-marked) {
+  background-image: linear-gradient(0deg, rgba(179, 136, 255, calc(var(--p) * 2.2)), transparent 70%);
+}
+.cell.is-super.has-prob:not(.is-marked) {
+  background-image:
+    linear-gradient(0deg, rgba(255, 111, 174, calc(var(--p) * 2.2)), transparent 70%),
+    linear-gradient(135deg, #eaefff 0%, #fff 50%, #ffe8f3 100%);
+}
+.cell:not(.is-super) .val { transition: transform .3s; }
+.cell.has-prob:not(.is-super):not(.is-marked) .val { transform: translate(-50%, -62%); }

@@ -98,6 +98,25 @@
       </section>
 
       <aside class="side">
+        <section class="card meter" aria-labelledby="meter-title">
+          <div class="meter-head">
+            <h2 id="meter-title">확률 미터</h2>
+            <label class="switch">
+              <input type="checkbox" id="meter-toggle">
+              <span class="switch-track" aria-hidden="true"></span>
+              <span class="sr-only">확률 미터 켜기</span>
+            </label>
+          </div>
+          <div id="meter-body" hidden>
+            <p class="meter-legend">칸 위 숫자 = 다음 측정에서 그 칸이 채워질 확률<br>일반칸 <b>1/남은 수</b> · 중첩칸 <b>2/남은 수</b></p>
+            <dl class="meter-stats">
+              <div><dt>다음 측정에서 내 판이 채워질 확률</dt><dd id="meter-fill"></dd><span class="meter-bar"><i id="meter-fill-bar"></i></span></div>
+              <div><dt>다음 측정에서 빙고가 될 확률</dt><dd id="meter-bingo"></dd><span class="meter-bar"><i id="meter-bingo-bar"></i></span></div>
+              <div><dt>빙고까지 예상 측정 횟수</dt><dd id="meter-expected"></dd></div>
+            </dl>
+            <p class="meter-note">남은 숫자가 무작위로 측정된다고 가정한 값이에요.</p>
+          </div>
+        </section>
         <section class="card states" aria-labelledby="states-title">
           <h2 id="states-title">중첩 상태</h2>
           <ul id="state-list"></ul>
