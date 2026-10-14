@@ -16,12 +16,12 @@
     /**
      * els: { board, caller, pending, states, history, progress, meter }
      *   meter: { toggle, body, fill, fillBar, bingo, bingoBar, expected } (확률 미터, 선택)
-     * hooks: { onMark(index, n, auto), onBingo(lines) }
+     * hooks: { onMark(index, n, auto), onBingo(lines), onCallTap(index, event) → 처리했으면 true }
      */
     constructor(els, hooks = {}) {
       this.els = els;
       this.hooks = hooks;
-      this.view = new global.SBBoardView(els.board, { mode: 'play', onCell: i => this.tap(i) });
+      this.view = new global.SBBoardView(els.board, { mode: 'play', onCell: (i, e) => this.tap(i, e) });
       this.board = null;
       this.calls = [];
       this.pending = new Map(); // 숫자 → { index, deadline }
@@ -113,10 +113,12 @@
       if (!silent) this.renderAll();
     }
 
-    tap(i) {
+    tap(i, e) {
       const cell = this.board[i];
       if (this.finished || cell.marked) return;
       const entry = [...this.pending].find(([, p]) => p.index === i);
+      // 측정된 숫자 표시가 먼저, 아니면 (내 차례일 때) 이 칸의 숫자를 측정
+      if (!entry && this.hooks.onCallTap && this.hooks.onCallTap(i, e)) return;
       if (!entry) {
         this.view.shake(i);
         return toast('아직 측정되지 않은 칸이에요.');

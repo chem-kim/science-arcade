@@ -53,7 +53,7 @@
         } else {
           const btn = el('button', 'cell-btn');
           btn.type = 'button';
-          btn.addEventListener('click', () => this.onCell(i));
+          btn.addEventListener('click', e => this.onCell(i, e));
           cell.values.forEach((_, s) => btn.append(el('span', `val val-${SLOT_NAMES[s]}`)));
           if (cell.super) btn.append(el('span', 'burst'));
           btn.append(el('span', 'prob'));

@@ -24,6 +24,7 @@
   let seenNotice = null;
   let announced = new Set();
   let callSent = false;
+  let turnKey = null;     // 차례가 바뀌었는지 구분 (같은 사람 차례가 연달아 와도 새 차례로 인식)
   let unsub = null;
 
   const asArray = v => (Array.isArray(v) ? v : v ? Object.values(v) : []);
@@ -64,6 +65,7 @@
       room.updatePlayer(me.pid, { marked: me.marked });
     },
     onBingo: () => toast('빙고! 선생님 화면에서 순위를 확인하세요 🎉', 'bingo', 4000),
+    onCallTap: (i, e) => callFromBoard(i, e),
   });
 
   // ---------- 입장 ----------
@@ -184,15 +186,27 @@
 
   // ---------- 내 차례 ----------
 
+  const isMyTurn = () => S && S.status === 'playing' && S.turnPid === me.pid && !callSent;
+
+  /** 내 판에서 아직 측정되지 않은 숫자 */
+  function callableOnBoard() {
+    return marker.board.filter(c => c.result == null).flatMap(c => c.values).filter(v => !S.calls.includes(v));
+  }
+
   function renderTurn() {
     const myTurn = S.status === 'playing' && S.turnPid === me.pid;
+    const key = myTurn ? `${S.turnDeadline}` : null;
     const panel = $('#my-turn');
-    if (myTurn && panel.hidden) {
+    if (myTurn && key !== turnKey) {
       callSent = false;
       buildCallPad();
+      // 내 판에 고를 숫자가 없으면 숫자표를 바로 펼침
+      $('#other-pad').open = callableOnBoard().length === 0;
       if (navigator.vibrate) navigator.vibrate(150);
     }
+    turnKey = key;
     panel.hidden = !myTurn;
+    $('#play-board').classList.toggle('is-calling', isMyTurn());
     if (S.status === 'finishing') {
       $('#turn-name').textContent = '순위가 정해졌어요! 남은 칸을 눌러 주세요';
     } else {
@@ -210,15 +224,43 @@
       b.className = 'num';
       b.textContent = n;
       b.disabled = S.calls.includes(n);
-      b.addEventListener('click', () => {
-        if (callSent) return;
-        callSent = true;
-        pad.querySelectorAll('.num').forEach(x => { x.disabled = true; });
-        b.classList.add('is-current');
-        room.send({ type: 'call', pid: me.pid, n });
-      });
+      b.addEventListener('click', () => sendCall(n));
       pad.append(b);
     });
+  }
+
+  function sendCall(n) {
+    if (!isMyTurn() || S.calls.includes(n)) return;
+    callSent = true;
+    const pad = $('#call-pad');
+    pad.querySelectorAll('.num').forEach(x => { x.disabled = true; x.classList.toggle('is-current', Number(x.textContent) === n); });
+    $('#play-board').classList.remove('is-calling');
+    room.send({ type: 'call', pid: me.pid, n });
+  }
+
+  /** 내 차례에 빙고판의 칸을 누르면 그 숫자를 측정. 중첩칸은 누른 쪽(사선 위/아래) 숫자 */
+  function callFromBoard(i, e) {
+    if (!isMyTurn()) return false;
+    const cell = marker.board[i];
+    if (cell.result != null) {
+      toast('이미 측정된 칸이에요. 다른 칸을 골라 주세요.');
+      return true;
+    }
+    let n = cell.values[0];
+    if (cell.super) {
+      const rect = e && e.currentTarget && e.currentTarget.getBoundingClientRect();
+      if (!rect || !e.detail) {
+        // 키보드로 누른 경우: 위치를 알 수 없으므로 숫자표에서 고르게 함
+        $('#other-pad').open = true;
+        toast(`중첩칸은 ${cell.values[0]} 또는 ${cell.values[1]} 중 숫자표에서 골라 주세요.`);
+        return true;
+      }
+      const rx = (e.clientX - rect.left) / rect.width;
+      const ry = (e.clientY - rect.top) / rect.height;
+      n = rx + ry < 1 ? cell.values[0] : cell.values[1];
+    }
+    sendCall(n);
+    return true;
   }
 
   setInterval(() => {

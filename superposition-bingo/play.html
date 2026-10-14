@@ -96,8 +96,12 @@
 
       <section class="board-area">
         <div class="my-turn" id="my-turn" hidden>
-          <p class="my-turn-title">내 차례! 측정할 숫자를 고르세요 <span id="my-turn-sec"></span></p>
-          <div class="numpad call-pad" id="call-pad"></div>
+          <p class="my-turn-title">내 차례! <b>내 빙고판</b>에서 측정할 숫자를 누르세요 <span id="my-turn-sec"></span></p>
+          <p class="my-turn-hint">중첩칸은 누른 쪽 숫자를 측정해요 (사선 위쪽 / 아래쪽)</p>
+          <details class="other-pad" id="other-pad">
+            <summary>다른 숫자 고르기 (내 판에 없는 숫자)</summary>
+            <div class="numpad call-pad" id="call-pad"></div>
+          </details>
         </div>
         <div class="board" id="play-board" role="grid" aria-label="내 빙고판"></div>
       </section>
