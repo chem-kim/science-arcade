@@ -15,6 +15,7 @@
 1. 교사: `superposition-bingo/host.html`에서 방을 만들고, 방 코드나 QR코드를 보여줍니다.
 2. 학생: `superposition-bingo/play.html`에서 방 코드와 닉네임으로 입장합니다.
 3. 혼자 연습: `superposition-bingo/` 첫 화면에서 "혼자 연습하기"를 누릅니다.
+4. 시뮬레이션 실험실: `superposition-bingo/sim.html`에서 중첩칸 개수·위치에 따른 빙고 시점을 수천 판 시뮬레이션으로 비교합니다.
 
 ## 개발 메모
 

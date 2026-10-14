@@ -164,9 +164,41 @@
     return { cell, fillNext, bingoNext, expected, left, done };
   }
 
+  // 두 대각선 위의 칸 (가운데 칸은 4줄, 나머지 대각선 칸은 3줄에 속함)
+  const DIAGONAL = [...new Set([...LINES[2 * SIZE], ...LINES[2 * SIZE + 1]])];
+
+  /**
+   * 시뮬레이션: 무작위 빙고판 하나를 무작위 순서로 측정했을 때, 몇 번째 측정에서 빙고하는지
+   * placement: 'random' 무작위 | 'diag' 대각선 위 우선 | 'offdiag' 대각선 밖 우선
+   */
+  function simulateOnce(superCount, placement = 'random') {
+    const all = range(0, CELL_COUNT - 1);
+    const diag = new Set(DIAGONAL);
+    const preferred = placement === 'diag' ? all.filter(i => diag.has(i))
+      : placement === 'offdiag' ? all.filter(i => !diag.has(i)) : all;
+    const rest = all.filter(i => !preferred.includes(i));
+    const superIdx = new Set([...shuffle(preferred), ...shuffle(rest)].slice(0, superCount));
+
+    const nums = shuffle(range(1, MAX_NUMBER));
+    const values = all.map(i => (superIdx.has(i) ? [nums.pop(), nums.pop()] : [nums.pop()]));
+    return bingoCallIndex(values, shuffle(range(1, MAX_NUMBER)));
+  }
+
+  /** trials판 시뮬레이션 → { mean, counts[측정 횟수] } */
+  function simulate(superCount, placement, trials) {
+    const counts = new Array(MAX_NUMBER + 1).fill(0);
+    let sum = 0;
+    for (let t = 0; t < trials; t++) {
+      const k = simulateOnce(superCount, placement);
+      counts[k]++;
+      sum += k;
+    }
+    return { mean: sum / trials, counts };
+  }
+
   global.SBRules = {
     SIZE, CELL_COUNT, MAX_NUMBER, DEFAULT_SUPER_COUNT, LINES,
     shuffle, range, createBoard, boardFromValues, usedNumbers, isComplete, autoFill, measure, completedLines,
-    fillOrder, bingoCallIndex, cellsToBingo, rankByCall, probabilities,
+    fillOrder, bingoCallIndex, cellsToBingo, rankByCall, probabilities, DIAGONAL, simulateOnce, simulate,
   };
 })(window);

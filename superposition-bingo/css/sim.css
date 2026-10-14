@@ -1,0 +1,84 @@
+/* 중첩 빙고 — 시뮬레이션 실험실 */
+
+.sim-layout { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 24px; align-items: start; }
+.sim-layout .card { margin: 0 0 20px; max-width: none; }
+.sim-setup { position: sticky; top: 16px; }
+.sim-setup h2 { font-size: 1.15rem; }
+.opt-label { margin: 16px 0 8px; font-size: .9rem; color: var(--muted); }
+.sim-setup .pills { gap: 8px; }
+.sim-setup .pill span { font-size: 1rem; padding: .5em 1.1em; }
+.pill input[type="checkbox"]:checked + span { background: linear-gradient(135deg, #ff8cc3, #b38bff); border-color: transparent; color: #fff; }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; }
+.swatch.line { width: 18px; height: 4px; border-radius: 2px; vertical-align: 3px; }
+.pill .swatch { box-shadow: 0 0 0 2px #fff; }
+
+.mini-boards { display: flex; gap: 16px; margin-top: 12px; }
+.mini-boards figure { margin: 0; text-align: center; font-size: .8rem; color: var(--muted); }
+.mini { display: grid; grid-template-columns: repeat(5, 14px); gap: 3px; padding: 6px; background: #fff; border-radius: 10px; box-shadow: var(--shadow-sm); }
+.mini span { width: 14px; height: 14px; border-radius: 4px; background: var(--surface-2); }
+.mini span.on { background: linear-gradient(135deg, var(--state-a), var(--state-b)); }
+
+.predict { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.predict legend { padding: 0; margin-bottom: 8px; font-size: .95rem; }
+.run { width: 100%; margin-top: 20px; }
+.progress-bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-top: 12px; }
+.progress-bar span {
+  display: block; height: 100%; transform-origin: left; transform: scaleX(0);
+  background: linear-gradient(90deg, var(--state-a), var(--state-b));
+}
+
+.empty { text-align: center; color: var(--muted); padding: 48px 20px; }
+
+.verdict { background: linear-gradient(135deg, #fff7e6, #ffeef7); }
+.verdict p { margin: .2em 0; }
+.v-title { font-family: var(--font-round); font-size: 1.6rem; color: #a35fd6; }
+.v-title.ok { color: #d24f8f; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.tile { padding: 14px 16px; border-radius: 16px; background: var(--surface-2); }
+.tile p { margin: 0; }
+.tile-label { font-size: .9rem; color: var(--muted); }
+.tile-value { font-family: var(--font-round); font-size: 2.2rem; line-height: 1.2; color: var(--text); }
+.tile-value small { font-size: .45em; margin-left: 2px; color: var(--muted); }
+.tile-sub { font-size: .8rem; color: var(--muted); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 8px; font-size: .9rem; color: var(--text); }
+.chart { position: relative; width: 100%; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--font); }
+.chart .grid { stroke: #efe6ef; stroke-width: 1; }
+.chart .axis { stroke: #d8c8d8; stroke-width: 1; }
+.chart .tick { fill: #8b7a9e; font-size: 11px; font-variant-numeric: tabular-nums; }
+.chart .axis-title { fill: #8b7a9e; font-size: 12px; }
+.chart .series { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .dlabel { fill: var(--text); font-size: 12px; font-weight: 700; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+.chart .cross { stroke: #b9a6c9; stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .hdot { stroke: #fff; stroke-width: 2; }
+.chart .hit { fill: transparent; cursor: crosshair; touch-action: pan-y; }
+.tooltip {
+  position: absolute; top: 0; transform: translateX(-50%); pointer-events: none;
+  background: #fff; border-radius: 12px; padding: 8px 12px; box-shadow: 0 6px 20px rgba(160, 90, 170, .25);
+  font-size: .85rem; min-width: 170px;
+}
+.tooltip p { margin: 2px 0; display: flex; align-items: center; }
+.tooltip b { margin-left: auto; padding-left: 12px; font-variant-numeric: tabular-nums; }
+.tt-title { font-weight: 700; color: #a35fd6; }
+
+.table-view { margin-top: 12px; }
+.table-view summary { cursor: pointer; color: #a35fd6; font-family: var(--font-round); }
+.table-wrap { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child { text-align: left; }
+thead th { color: var(--muted); font-weight: 600; }
+tr.sum th, tr.sum td { font-weight: 700; color: #a35fd6; border-bottom: 0; }
+
+.explain p { margin: .5em 0; }
+.mini-table { margin: 12px 0; max-width: 480px; }
+.mini-table th, .mini-table td { white-space: normal; padding: 6px 8px; }
+.lines-list { margin: .5em 0; padding-left: 1.2em; }
+.lines-list li + li { margin-top: .3em; }
+
+@media (max-width: 900px) {
+  .sim-layout { grid-template-columns: minmax(0, 1fr); }
+  .sim-setup { position: static; }
+}

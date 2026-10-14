@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>중첩 빙고 · 시뮬레이션 실험실</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%E2%9A%9B%EF%B8%8F%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/multi.css">
+  <link rel="stylesheet" href="css/sim.css">
+</head>
+<body>
+  <main id="screen-sim" class="screen is-active" aria-labelledby="sim-title">
+    <header class="topbar">
+      <a class="btn btn-ghost" href="index.html">← 처음으로</a>
+      <h1 id="sim-title">시뮬레이션 실험실</h1>
+    </header>
+    <p class="hint">컴퓨터가 빙고를 수천 판 자동으로 플레이해서, 중첩칸이 정말 유리한지 확인해요.</p>
+
+    <div class="sim-layout">
+      <!-- 실험 설정 -->
+      <section class="card sim-setup" aria-labelledby="setup-h">
+        <h2 id="setup-h">① 실험 고르기</h2>
+        <div class="pills" role="radiogroup" aria-label="실험 종류">
+          <label class="pill"><input type="radio" name="exp" value="count" checked><span>중첩칸 개수</span></label>
+          <label class="pill"><input type="radio" name="exp" value="place"><span>중첩칸 위치</span></label>
+        </div>
+
+        <div id="opt-count" class="opt">
+          <p class="opt-label">비교할 중첩칸 개수</p>
+          <div class="pills" id="count-pills" aria-label="중첩칸 개수 선택"></div>
+        </div>
+
+        <div id="opt-place" class="opt" hidden>
+          <p class="opt-label">중첩칸 개수</p>
+          <div class="pills" role="radiogroup" aria-label="위치 실험의 중첩칸 개수">
+            <label class="pill"><input type="radio" name="place-k" value="2"><span>2개</span></label>
+            <label class="pill"><input type="radio" name="place-k" value="4" checked><span>4개</span></label>
+            <label class="pill"><input type="radio" name="place-k" value="6"><span>6개</span></label>
+          </div>
+          <div class="mini-boards" aria-hidden="true">
+            <figure><div class="mini" data-place="diag"></div><figcaption>대각선 위</figcaption></figure>
+            <figure><div class="mini" data-place="offdiag"></div><figcaption>대각선 밖</figcaption></figure>
+          </div>
+        </div>
+
+        <p class="opt-label">판 수</p>
+        <div class="pills" role="radiogroup" aria-label="시뮬레이션 판 수">
+          <label class="pill"><input type="radio" name="trials" value="1000"><span>1,000판</span></label>
+          <label class="pill"><input type="radio" name="trials" value="5000" checked><span>5,000판</span></label>
+          <label class="pill"><input type="radio" name="trials" value="20000"><span>20,000판</span></label>
+        </div>
+
+        <h2 class="mt">② 먼저 예측하기</h2>
+        <fieldset class="predict" id="predict-count">
+          <legend>중첩칸이 많아지면, 빙고는…</legend>
+          <label class="pill"><input type="radio" name="guess-count" value="faster"><span>빨라진다</span></label>
+          <label class="pill"><input type="radio" name="guess-count" value="same"><span>비슷하다</span></label>
+          <label class="pill"><input type="radio" name="guess-count" value="slower"><span>늦어진다</span></label>
+        </fieldset>
+        <fieldset class="predict" id="predict-place" hidden>
+          <legend>중첩칸을 어디에 두면 빙고가 가장 빠를까?</legend>
+          <label class="pill"><input type="radio" name="guess-place" value="diag"><span>대각선 위</span></label>
+          <label class="pill"><input type="radio" name="guess-place" value="random"><span>아무 데나</span></label>
+          <label class="pill"><input type="radio" name="guess-place" value="offdiag"><span>대각선 밖</span></label>
+        </fieldset>
+
+        <button class="btn btn-primary btn-lg run" id="btn-run">③ 실험 시작</button>
+        <div class="progress-bar" id="progress" hidden><span></span></div>
+      </section>
+
+      <!-- 결과 -->
+      <section class="sim-results" aria-live="polite">
+        <div class="card empty" id="empty">
+          <p>왼쪽에서 실험을 고르고 <strong>실험 시작</strong>을 눌러 보세요.</p>
+        </div>
+
+        <div id="results" hidden>
+          <div class="card verdict" id="verdict"></div>
+
+          <section class="card" aria-labelledby="mean-h">
+            <h2 id="mean-h">평균: 몇 번째 측정에서 빙고했을까?</h2>
+            <div class="tiles" id="tiles"></div>
+          </section>
+
+          <section class="card" aria-labelledby="dist-h">
+            <h2 id="dist-h">분포: 빙고한 시점별 판의 비율</h2>
+            <div class="legend" id="legend"></div>
+            <div class="chart" id="chart"></div>
+            <details class="table-view">
+              <summary>표로 보기</summary>
+              <div class="table-wrap" id="table"></div>
+            </details>
+          </section>
+
+          <section class="card explain" id="explain"></section>
+
+          <section class="card reflect-card" aria-labelledby="think-h">
+            <h2 id="think-h">생각해 보기</h2>
+            <ol id="questions"></ol>
+          </section>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="js/rules.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/sim.js"></script>
+</body>
+</html>
