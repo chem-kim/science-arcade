@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>중첩 빙고 · 진행자</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%E2%9A%9B%EF%B8%8F%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/multi.css">
+</head>
+<body class="host">
+  <!-- 연결 불가 -->
+  <main id="screen-error" class="screen" aria-labelledby="error-title">
+    <section class="card center">
+      <h1 id="error-title">연결 설정이 필요해요</h1>
+      <p>Firebase 설정(js/firebase-config.js)이 아직 없습니다.</p>
+      <p class="muted">같은 컴퓨터에서 미리 테스트하려면 주소 끝에 <code>?net=local</code> 을 붙여 여세요.</p>
+      <a class="btn" href="index.html">처음으로</a>
+    </section>
+  </main>
+
+  <!-- 방 만들기 -->
+  <main id="screen-create" class="screen" aria-labelledby="create-title">
+    <header class="topbar">
+      <a class="btn btn-ghost" href="index.html" data-keep-net>← 처음으로</a>
+      <h1 id="create-title">방 만들기</h1>
+    </header>
+    <section class="card">
+      <h2>중첩칸 개수</h2>
+      <p class="muted">중첩칸이 많을수록 한 판에 들어가는 숫자가 많아집니다.</p>
+      <div class="pills" role="radiogroup" aria-label="중첩칸 개수" id="super-count">
+        <label class="pill"><input type="radio" name="super" value="2" checked><span>2개 <small>기본</small></span></label>
+        <label class="pill"><input type="radio" name="super" value="4"><span>4개</span></label>
+        <label class="pill"><input type="radio" name="super" value="6"><span>6개</span></label>
+      </div>
+      <div class="row-actions">
+        <button class="btn btn-primary btn-lg" data-action="create-room">방 만들기</button>
+      </div>
+      <p class="resume" id="resume-box" hidden>
+        진행 중이던 방 <strong id="resume-code"></strong>이(가) 있어요.
+        <button class="btn" data-action="resume-room">이어하기</button>
+      </p>
+    </section>
+  </main>
+
+  <!-- 대기실 -->
+  <main id="screen-lobby" class="screen" aria-labelledby="lobby-title">
+    <header class="topbar">
+      <h1 id="lobby-title">대기실</h1>
+      <button class="btn btn-ghost" data-action="close-room">방 닫기</button>
+    </header>
+    <div class="lobby-layout">
+      <section class="card join-card">
+        <p class="muted">방 코드</p>
+        <p class="room-code" id="room-code"></p>
+        <div class="qr" id="qr" aria-hidden="true"></div>
+        <p class="join-url" id="join-url"></p>
+        <p class="muted small">중첩칸 <strong id="lobby-super"></strong>개</p>
+      </section>
+      <section class="card">
+        <h2>참가자 <span class="count" id="lobby-count">0</span></h2>
+        <ul class="player-chips" id="lobby-players"></ul>
+        <p class="muted small" id="lobby-hint">학생들이 빙고판을 완성하고 “준비 완료”를 누르면 초록색으로 바뀌어요.</p>
+        <div class="row-actions">
+          <button class="btn btn-primary btn-lg" data-action="start-game" id="btn-start-game" disabled>게임 시작</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 진행 -->
+  <main id="screen-game" class="screen" aria-labelledby="game-title">
+    <header class="topbar">
+      <h1 id="game-title">중첩 <span class="ket">|빙고⟩</span> <span class="room-tag" id="game-code"></span></h1>
+      <span class="progress" id="game-progress"></span>
+    </header>
+    <div class="host-layout">
+      <section class="card host-caller">
+        <p class="caller-label" id="caller-by">측정을 기다리는 중</p>
+        <p class="caller-number" id="host-number" aria-live="assertive">–</p>
+        <div class="turn-box" id="turn-box">
+          <p class="turn-name" id="turn-name"></p>
+          <div class="turn-bar"><span id="turn-bar"></span></div>
+          <p class="turn-sec" id="turn-sec"></p>
+        </div>
+        <div class="row-actions">
+          <button class="btn" data-action="skip-turn">차례 건너뛰기</button>
+          <button class="btn" data-action="end-game">게임 끝내기</button>
+        </div>
+      </section>
+      <section class="card">
+        <h2>측정 기록</h2>
+        <div class="history-grid big" id="host-history"></div>
+        <h2 class="mt">순위</h2>
+        <ol class="winners" id="host-winners"><li class="muted">아직 빙고가 없어요</li></ol>
+      </section>
+      <section class="card">
+        <h2>빙고까지 남은 칸</h2>
+        <ul class="board-status" id="host-status"></ul>
+      </section>
+    </div>
+  </main>
+
+  <!-- 종료 -->
+  <main id="screen-end" class="screen" aria-labelledby="end-title">
+    <h1 id="end-title" class="end-title">게임 종료!</h1>
+    <div class="podium" id="podium"></div>
+    <section class="card reflect-card">
+      <h2>생각해 보기</h2>
+      <ol>
+        <li>빙고한 친구들의 판에는 중첩칸이 몇 개 들어 있었나요? 중첩칸이 정말 유리했을까요?</li>
+        <li>측정 전 중첩칸의 두 숫자는 “둘 중 하나가 숨어 있던” 것일까요, “동시에 존재한” 것일까요?</li>
+        <li>이 게임에서는 친구가 측정할 숫자를 <strong>골랐습니다</strong>. 실제 양자 측정에서도 결과를 고를 수 있을까요?</li>
+        <li>중첩칸이 확정된 뒤 다른 숫자가 불려도 바뀌지 않았습니다. 이것은 실제 측정의 어떤 성질과 닮았나요?</li>
+      </ol>
+    </section>
+    <div class="row-actions center">
+      <button class="btn btn-primary btn-lg" data-action="new-game">새 게임</button>
+    </div>
+  </main>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/rules.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/net.js"></script>
+  <script src="js/host.js"></script>
+</body>
+</html>

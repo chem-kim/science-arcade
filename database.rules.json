@@ -1,0 +1,30 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "superposition-bingo": {
+      "rooms": {
+        ".read": true,
+        ".indexOn": ["meta/createdAt"],
+        "$code": {
+          ".write": true,
+          ".validate": "$code.matches(/^[0-9]{4}$/)",
+          "meta": {
+            ".validate": "newData.hasChildren(['createdAt'])"
+          },
+          "players": {
+            "$pid": {
+              ".validate": "$pid.matches(/^[a-z0-9]{4,12}$/)",
+              "name": { ".validate": "newData.isString() && newData.val().length <= 10" }
+            }
+          },
+          "inbox": {
+            "$id": {
+              ".validate": "newData.hasChildren(['type', 'pid'])"
+            }
+          }
+        }
+      }
+    }
+  }
+}

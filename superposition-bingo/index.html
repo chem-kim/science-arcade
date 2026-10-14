@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>중첩 빙고</title>
+  <meta name="description" content="양자역학의 중첩과 측정을 빙고로 체험하는 수업용 게임">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%E2%9A%9B%EF%B8%8F%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 홈 -->
+  <main id="screen-home" class="screen is-active" aria-labelledby="home-title">
+    <header class="hero">
+      <p class="eyebrow">SCIENCE ARCADE</p>
+      <h1 id="home-title">중첩 <span class="ket">|빙고⟩</span></h1>
+      <p class="lead">측정하기 전까지, 한 칸에 두 숫자가 <strong>동시에</strong> 존재합니다.</p>
+    </header>
+
+    <section class="card concept" aria-labelledby="concept-title">
+      <h2 id="concept-title">중첩이란?</h2>
+      <div class="concept-grid">
+        <div class="concept-item is-wrong">
+          <p class="tag">중첩이 아님</p>
+          <p><strong>상자 속 동전</strong> — 이미 앞면이든 뒷면이든 정해져 있고, 우리가 모를 뿐입니다.</p>
+        </div>
+        <div class="concept-item is-right">
+          <p class="tag">중첩</p>
+          <p><strong>전자의 스핀</strong> — 측정 전에는 위와 아래가 <em>함께 섞인</em> 하나의 상태입니다. 측정하는 순간 결과가 하나로 정해집니다.</p>
+        </div>
+      </div>
+      <p class="formula">|ψ⟩ = α|7⟩ + β|22⟩ &nbsp;→&nbsp; 측정 &nbsp;→&nbsp; |7⟩</p>
+    </section>
+
+    <section class="card rules" aria-labelledby="rules-title">
+      <h2 id="rules-title">게임 규칙</h2>
+      <ol>
+        <li>5×5 빙고판에 1~35 중 숫자를 써넣습니다.</li>
+        <li><strong>중첩칸</strong>(사선으로 나뉜 칸)에는 서로 다른 숫자 2개를 씁니다.</li>
+        <li>숫자가 불리면(=측정) 내 판에서 그 숫자를 직접 누릅니다. 30초가 지나면 자동으로 표시됩니다.</li>
+        <li>중첩칸은 두 숫자 중 <strong>먼저 불린 숫자로 확정</strong>됩니다. 확정된 뒤에는 다른 숫자가 불려도 바뀌지 않습니다.</li>
+        <li>가로·세로·대각선 중 한 줄을 모두 채우면 빙고!</li>
+      </ol>
+    </section>
+
+    <nav class="mode-buttons" aria-label="게임 모드">
+      <button class="btn btn-primary btn-lg" data-action="start-solo">혼자 연습하기</button>
+      <a class="btn btn-lg" href="host.html">방 만들기 (교사)</a>
+      <a class="btn btn-lg" href="play.html">방 참가 (학생)</a>
+    </nav>
+  </main>
+
+  <!-- 빙고판 작성 -->
+  <main id="screen-setup" class="screen" aria-labelledby="setup-title">
+    <header class="topbar">
+      <button class="btn btn-ghost" data-action="go-home" aria-label="처음으로">← 처음으로</button>
+      <h1 id="setup-title">빙고판 만들기</h1>
+      <span class="progress" id="setup-progress" aria-live="polite"></span>
+    </header>
+
+    <p class="hint">칸을 누르고 아래에서 숫자를 고르세요. <span class="super-chip">중첩칸</span>에는 숫자 2개가 들어갑니다.</p>
+
+    <div class="setup-layout">
+      <div class="board" id="setup-board" role="grid" aria-label="내 빙고판"></div>
+      <div class="numpad-wrap">
+        <div class="numpad" id="numpad" aria-label="숫자 선택"></div>
+        <div class="setup-actions">
+          <button class="btn" data-action="clear-slot">이 칸 지우기</button>
+          <button class="btn" data-action="auto-fill">빈칸 자동 채우기</button>
+          <button class="btn" data-action="reset-board">중첩칸 다시 배치</button>
+          <button class="btn btn-primary" data-action="start-play" id="btn-start-play" disabled>게임 시작</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 게임 진행 -->
+  <main id="screen-play" class="screen" aria-labelledby="play-title">
+    <header class="topbar">
+      <button class="btn btn-ghost" data-action="go-home" aria-label="처음으로">← 처음으로</button>
+      <h1 id="play-title">혼자 연습하기</h1>
+      <span class="progress" id="play-progress"></span>
+    </header>
+
+    <div class="play-layout">
+      <section class="caller" aria-label="측정">
+        <p class="caller-label">방금 측정된 숫자</p>
+        <p class="caller-number" id="caller-number" aria-live="assertive">–</p>
+        <button class="btn btn-primary btn-lg" data-action="measure" id="btn-measure">측정하기</button>
+        <div class="pending" id="pending" aria-label="아직 누르지 않은 숫자"></div>
+      </section>
+
+      <section class="board-area">
+        <div class="board" id="play-board" role="grid" aria-label="내 빙고판"></div>
+      </section>
+
+      <aside class="side">
+        <section class="card states" aria-labelledby="states-title">
+          <h2 id="states-title">중첩 상태</h2>
+          <ul id="state-list"></ul>
+        </section>
+        <section class="card history" aria-labelledby="history-title">
+          <h2 id="history-title">측정 기록</h2>
+          <div class="history-grid" id="history-grid"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <!-- 결과 -->
+  <dialog id="result-dialog" aria-labelledby="result-title">
+    <h2 id="result-title">빙고!</h2>
+    <p id="result-summary"></p>
+    <section class="reflect">
+      <h3>생각해 보기</h3>
+      <ol>
+        <li>중첩칸은 일반칸보다 빨리 채워졌나요? 측정 한 번에 채워질 확률로 설명해 보세요.</li>
+        <li>측정 전 중첩칸의 두 숫자는 “둘 중 하나가 숨어 있던” 것일까요, “동시에 존재한” 것일까요? 상자 속 동전과 무엇이 다른가요?</li>
+        <li>중첩칸이 한 숫자로 확정된 뒤에는 다른 숫자가 불려도 바뀌지 않았습니다. 실제 양자 측정에서 이것은 무엇에 해당할까요?</li>
+        <li>이 게임의 “측정”과 실제 양자역학의 측정은 어떤 점이 다를까요?</li>
+      </ol>
+    </section>
+    <div class="dialog-actions">
+      <button class="btn" data-action="replay-same">같은 판으로 다시</button>
+      <button class="btn btn-primary" data-action="new-board">새 판 만들기</button>
+    </div>
+  </dialog>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="js/rules.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/board-view.js"></script>
+  <script src="js/setup.js"></script>
+  <script src="js/marker.js"></script>
+  <script src="js/solo.js"></script>
+</body>
+</html>

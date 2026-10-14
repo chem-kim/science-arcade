@@ -1,0 +1,177 @@
+/* 중첩 빙고 — 멀티플레이(교사·학생 화면) 추가 스타일 */
+
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.mt { margin-top: 1.2em; }
+.center { text-align: center; }
+.card.center { max-width: 560px; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.row-actions.center { justify-content: center; margin: 28px 0 0; }
+code { background: var(--surface-2); padding: .1em .4em; border-radius: 6px; }
+
+/* ---------- 입장 ---------- */
+.small-hero { padding-top: 40px; }
+.join-form { display: grid; gap: 8px; max-width: 420px; }
+.join-form label { font-family: var(--font-round); color: #a35fd6; margin-top: 6px; }
+.join-form input {
+  font: inherit; font-size: 1.2rem; padding: .7em 1em;
+  border: 2px solid var(--line); border-radius: 16px; background: #fff; color: var(--text);
+}
+.join-form input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(179, 136, 255, .2); }
+#in-code { font-family: var(--font-round); font-size: 1.8rem; letter-spacing: .4em; text-align: center; }
+.join-form .btn { margin-top: 12px; }
+.form-error { color: var(--danger); min-height: 1.4em; margin: 0; text-align: center; }
+
+/* ---------- 방 만들기 ---------- */
+.pills { display: flex; flex-wrap: wrap; gap: 10px; }
+.pill input { position: absolute; opacity: 0; pointer-events: none; }
+.pill span {
+  display: inline-block; padding: .6em 1.4em; border-radius: 999px; cursor: pointer;
+  border: 2px solid var(--line); background: #fff; font-family: var(--font-round); font-size: 1.1rem;
+  transition: all .15s;
+}
+.pill small { color: var(--muted); font-size: .75em; }
+.pill input:checked + span { background: linear-gradient(135deg, #ff8cc3, #b38bff); border-color: transparent; color: #fff; }
+.pill input:checked + span small { color: #fff; }
+.pill input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 3px; }
+.resume { margin: 18px 0 0; padding: 12px 16px; border-radius: 16px; background: #fff7e6; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- 대기실 ---------- */
+.lobby-layout { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 24px; align-items: start; }
+.lobby-layout .card { margin: 0; max-width: none; }
+.join-card { text-align: center; }
+.join-card p { margin: 0; }
+.room-code {
+  font-family: var(--font-round); font-size: clamp(3.5rem, 10vw, 5.5rem); letter-spacing: .12em; line-height: 1.1;
+  background: linear-gradient(135deg, var(--state-a), var(--state-b));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.qr { display: flex; justify-content: center; margin: 14px 0; }
+.qr img, .qr canvas { border-radius: 12px; border: 8px solid #fff; box-shadow: var(--shadow-sm); }
+.join-url { font-size: .8rem; color: var(--muted); word-break: break-all; }
+.count {
+  display: inline-block; min-width: 1.8em; padding: 0 .5em; border-radius: 999px; text-align: center;
+  background: var(--state-b); color: #fff; font-size: .9em;
+}
+
+.player-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: .35em .5em .35em 1em; border-radius: 999px; background: #fff; border: 2px solid var(--line);
+  font-family: var(--font-round); font-size: 1.05rem; animation: pop .35s ease-out;
+}
+.chip.is-ready { background: var(--marked); border-color: var(--marked-line); color: var(--marked-text); }
+.chip.is-offline { opacity: .45; }
+.wait-card .chip, .chip:not(:has(.chip-x)) { padding-right: 1em; }
+.chip-x {
+  border: 0; background: transparent; cursor: pointer; color: var(--muted);
+  width: 1.6em; height: 1.6em; border-radius: 50%; font-size: 1rem; line-height: 1;
+}
+.chip-x:hover { background: #ffe3ec; color: var(--danger); }
+
+/* ---------- 교사 진행 화면 ---------- */
+.topbar .ket { font-size: 1em; }
+.room-tag { font-size: .7em; color: var(--muted); background: #fff; padding: .1em .7em; border-radius: 999px; vertical-align: middle; }
+.host-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, .9fr); gap: 20px; align-items: start; }
+.host-layout .card { margin: 0; max-width: none; }
+.host-caller { text-align: center; }
+.host-caller .caller-label { font-size: 1.2rem; color: #a35fd6; font-family: var(--font-round); }
+.host-caller .caller-number { font-size: clamp(6rem, 14vw, 11rem); margin: 0; }
+.host-caller .row-actions { justify-content: center; }
+
+.turn-box { margin-top: 10px; padding: 12px 16px; border-radius: 18px; background: linear-gradient(135deg, #eef1ff, #fff0f7); text-align: left; }
+.turn-box p { margin: 0; }
+.turn-name { font-family: var(--font-round); font-size: 1.25rem; }
+.turn-bar { height: 10px; border-radius: 999px; background: #fff; overflow: hidden; margin: 8px 0 4px; }
+.turn-bar span {
+  display: block; height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--state-a), var(--state-b));
+  transform-origin: left; transition: transform .25s linear;
+}
+.turn-sec { font-size: .9rem; color: var(--muted); text-align: right; }
+.turn-box.is-finishing { background: #fff6dc; }
+.turn-box.is-finishing .turn-bar span { background: var(--win); }
+.turn-box.is-mine { background: linear-gradient(135deg, #ffe0ef, #ffeccc); box-shadow: 0 0 0 3px var(--state-b); }
+
+.history-grid.big { gap: 6px; }
+.history-grid.big .h-num { font-size: 1.15rem; padding: 8px 0; font-family: var(--font-round); }
+
+.winners { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.winners li { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 14px; background: #fff7e6; font-family: var(--font-round); font-size: 1.2rem; }
+.winners li.muted { background: transparent; font-family: var(--font); font-size: 1rem; }
+.winners li.is-waiting { opacity: .65; }
+.winners .medal { font-size: 1.5rem; }
+.winners .small { margin-left: auto; font-family: var(--font); }
+
+.board-status { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 70vh; overflow-y: auto; }
+.board-status li {
+  display: grid; grid-template-columns: 1fr auto 3.5em; align-items: center; gap: 8px;
+  padding: 6px 12px; border-radius: 12px; background: var(--surface-2);
+}
+.board-status li.is-turn { background: linear-gradient(135deg, #ffe0ef, #eee5ff); box-shadow: inset 0 0 0 2px var(--state-b); }
+.board-status li.is-offline { opacity: .45; }
+.board-status .name { font-family: var(--font-round); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board-status .dots { color: var(--state-b); letter-spacing: .1em; font-size: .85rem; }
+.board-status .left { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- 종료 / 시상대 ---------- */
+.end-title {
+  text-align: center; font-size: clamp(2.4rem, 8vw, 4rem); margin: 10px 0 24px;
+  background: linear-gradient(90deg, #ffae42, var(--state-b), var(--accent));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.podium { display: flex; justify-content: center; align-items: flex-end; gap: 12px; max-width: 720px; margin: 0 auto; }
+.step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; animation: rise .8s cubic-bezier(.2, .8, .2, 1.2) both; }
+.step-1 { animation-delay: .6s; }
+.step-2 { animation-delay: .3s; }
+@keyframes rise { from { opacity: 0; transform: translateY(40px); } }
+.step .names { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 2em; justify-content: flex-end; }
+.step .names span { font-family: var(--font-round); font-size: 1.3rem; padding: .1em .8em; border-radius: 999px; background: #fff; box-shadow: var(--shadow-sm); }
+.step .names span.is-me { background: var(--state-b); color: #fff; }
+.step .names span.muted { background: transparent; box-shadow: none; }
+.step .block {
+  width: 100%; border-radius: 22px 22px 8px 8px; color: #fff; font-family: var(--font-round); font-size: 1.4rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; box-shadow: var(--shadow);
+}
+.step .block small { font-family: var(--font); font-size: .75rem; opacity: .9; }
+.step .medal { font-size: 2.6rem; }
+.step-1 .block { height: 210px; background: linear-gradient(180deg, #ffc65c, #ff9fb5); }
+.step-2 .block { height: 170px; background: linear-gradient(180deg, #b8c4ff, #c9a6ff); }
+.step-3 .block { height: 140px; background: linear-gradient(180deg, #ffb9a1, #ff8fc0); }
+.reflect-card { margin-top: 32px; }
+.reflect-card ol { margin: 0; padding-left: 1.3em; }
+.reflect-card li + li { margin-top: .5em; }
+.reflect-card li::marker { color: var(--state-b); font-weight: 700; }
+.my-result { text-align: center; font-family: var(--font-round); font-size: 1.4rem; color: #a35fd6; margin: 0 0 24px; }
+
+/* ---------- 학생: 대기, 내 차례 ---------- */
+.wait-card { display: grid; justify-items: center; gap: 8px; }
+.wait-card .player-chips { justify-content: center; margin: 8px 0 12px; }
+.orbit { position: relative; width: 90px; height: 90px; margin-bottom: 4px; }
+.orbit span { position: absolute; inset: 0; border-radius: 50%; border: 3px solid transparent; animation: spin 2.4s linear infinite; }
+.orbit span:first-child { border-top-color: var(--state-a); border-bottom-color: var(--state-a); }
+.orbit span:last-child { inset: 18px; border-left-color: var(--state-b); border-right-color: var(--state-b); animation-direction: reverse; animation-duration: 1.6s; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.my-turn {
+  margin: 0 auto 14px; max-width: 560px; padding: 14px; border-radius: 22px;
+  background: linear-gradient(135deg, #ffe0ef, #fff2d9); box-shadow: 0 0 0 3px var(--state-b), var(--shadow);
+  animation: pop .4s ease-out;
+}
+.my-turn-title { margin: 0 0 10px; font-family: var(--font-round); font-size: 1.2rem; color: #d24f8f; text-align: center; }
+.call-pad .num { font-size: 1rem; }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1100px) {
+  .host-layout { grid-template-columns: 1fr 1fr; }
+  .host-caller { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .lobby-layout, .host-layout { grid-template-columns: 1fr; }
+  .step .block { font-size: 1.1rem; }
+  .step-1 .block { height: 170px; }
+  .step-2 .block { height: 140px; }
+  .step-3 .block { height: 115px; }
+  .step .medal { font-size: 2rem; }
+  .step .names span { font-size: 1rem; }
+}

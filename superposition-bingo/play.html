@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>중첩 빙고 · 참가</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%E2%9A%9B%EF%B8%8F%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/multi.css">
+</head>
+<body class="player">
+  <!-- 연결 불가 -->
+  <main id="screen-error" class="screen" aria-labelledby="error-title">
+    <section class="card center">
+      <h1 id="error-title">연결 설정이 필요해요</h1>
+      <p>선생님께 알려주세요. (Firebase 설정 없음)</p>
+    </section>
+  </main>
+
+  <!-- 입장 -->
+  <main id="screen-join" class="screen" aria-labelledby="join-title">
+    <header class="hero small-hero">
+      <p class="eyebrow">SCIENCE ARCADE</p>
+      <h1 id="join-title">중첩 <span class="ket">|빙고⟩</span></h1>
+    </header>
+    <form class="card join-form" id="join-form" novalidate>
+      <label for="in-code">방 코드</label>
+      <input id="in-code" name="code" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" placeholder="4자리 숫자" required>
+      <label for="in-name">닉네임</label>
+      <input id="in-name" name="name" maxlength="10" autocomplete="nickname" placeholder="실명 대신 닉네임도 좋아요" required>
+      <button class="btn btn-primary btn-lg" type="submit">입장하기</button>
+      <p class="form-error" id="join-error" role="alert"></p>
+    </form>
+  </main>
+
+  <!-- 빙고판 작성 -->
+  <main id="screen-setup" class="screen" aria-labelledby="setup-title">
+    <header class="topbar">
+      <h1 id="setup-title">빙고판 만들기</h1>
+      <span class="progress" id="setup-progress" aria-live="polite"></span>
+    </header>
+    <p class="hint">칸을 누르고 아래에서 숫자를 고르세요. <span class="super-chip">중첩칸</span>에는 숫자 2개가 들어갑니다.</p>
+    <div class="setup-layout">
+      <div class="board" id="setup-board" role="grid" aria-label="내 빙고판"></div>
+      <div class="numpad-wrap">
+        <div class="numpad" id="numpad" aria-label="숫자 선택"></div>
+        <div class="setup-actions">
+          <button class="btn" data-action="clear-slot">이 칸 지우기</button>
+          <button class="btn" data-action="auto-fill">빈칸 자동 채우기</button>
+          <button class="btn" data-action="reset-board">중첩칸 다시 배치</button>
+          <button class="btn btn-primary" data-action="ready" id="btn-ready" disabled>준비 완료</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 대기 -->
+  <main id="screen-wait" class="screen" aria-labelledby="wait-title">
+    <section class="card center wait-card">
+      <div class="orbit" aria-hidden="true"><span></span><span></span></div>
+      <h1 id="wait-title">준비 완료!</h1>
+      <p>선생님이 게임을 시작하길 기다리고 있어요.</p>
+      <ul class="player-chips" id="wait-players"></ul>
+      <button class="btn" data-action="unready">빙고판 다시 고치기</button>
+    </section>
+  </main>
+
+  <!-- 이미 시작된 게임 -->
+  <main id="screen-late" class="screen" aria-labelledby="late-title">
+    <section class="card center">
+      <h1 id="late-title">이미 시작된 게임이에요</h1>
+      <p>이번 판이 끝나고 선생님이 새 방을 만들면 다시 참가해 주세요.</p>
+    </section>
+  </main>
+
+  <!-- 게임 -->
+  <main id="screen-play" class="screen" aria-labelledby="play-title">
+    <header class="topbar">
+      <h1 id="play-title"><span id="me-name"></span></h1>
+      <span class="progress" id="play-progress"></span>
+    </header>
+
+    <div class="play-layout">
+      <section class="caller" aria-label="측정">
+        <p class="caller-label" id="caller-by">방금 측정된 숫자</p>
+        <p class="caller-number" id="caller-number" aria-live="assertive">–</p>
+        <div class="turn-box" id="turn-box">
+          <p class="turn-name" id="turn-name"></p>
+          <div class="turn-bar"><span id="turn-bar"></span></div>
+        </div>
+        <div class="pending" id="pending" aria-label="아직 누르지 않은 숫자"></div>
+      </section>
+
+      <section class="board-area">
+        <div class="my-turn" id="my-turn" hidden>
+          <p class="my-turn-title">내 차례! 측정할 숫자를 고르세요 <span id="my-turn-sec"></span></p>
+          <div class="numpad call-pad" id="call-pad"></div>
+        </div>
+        <div class="board" id="play-board" role="grid" aria-label="내 빙고판"></div>
+      </section>
+
+      <aside class="side">
+        <section class="card states" aria-labelledby="states-title">
+          <h2 id="states-title">중첩 상태</h2>
+          <ul id="state-list"></ul>
+        </section>
+        <section class="card history" aria-labelledby="history-title">
+          <h2 id="history-title">측정 기록</h2>
+          <div class="history-grid" id="history-grid"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <!-- 종료 -->
+  <main id="screen-end" class="screen" aria-labelledby="end-title">
+    <h1 id="end-title" class="end-title">게임 종료!</h1>
+    <p class="my-result" id="my-result"></p>
+    <div class="podium" id="podium"></div>
+  </main>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/rules.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/board-view.js"></script>
+  <script src="js/setup.js"></script>
+  <script src="js/marker.js"></script>
+  <script src="js/net.js"></script>
+  <script src="js/player.js"></script>
+</body>
+</html>

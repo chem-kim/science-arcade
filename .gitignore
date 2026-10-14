@@ -1,0 +1,21 @@
+# Firebase CLI 로그·캐시
+firebase-debug.log
+*-debug.log
+.firebase/
+
+# 개인정보·인증 정보
+.env
+*.key
+serviceAccount*.json
+
+# 문서·미디어 원본은 올리지 않음
+*.docx
+*.hwp
+*.hwpx
+*.zip
+*.mp4
+
+# 운영체제
+.DS_Store
+Thumbs.db
+desktop.ini

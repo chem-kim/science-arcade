@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SCIENCE ARCADE</title>
+  <meta name="description" content="과학 개념을 게임으로 배우는 수업용 게임 모음">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%E2%9A%9B%EF%B8%8F%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+  <style>
+    :root { --text: #3d2c4f; --muted: #8b7a9e; --a: #6f8bff; --b: #ff6fae; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text);
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+      background:
+        radial-gradient(700px 500px at 0% 0%, #ffe3f1, transparent 65%),
+        radial-gradient(700px 500px at 100% 0%, #e6e4ff, transparent 65%),
+        radial-gradient(800px 600px at 50% 110%, #dcf7ee, transparent 65%), #fff8fc;
+    }
+    main { max-width: 860px; margin: 0 auto; padding: 56px 16px; text-align: center; }
+    h1 {
+      font-family: "Jua", sans-serif; font-weight: 400; font-size: clamp(2.4rem, 9vw, 4rem); margin: 0;
+      background: linear-gradient(90deg, var(--a), var(--b)); -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    p.lead { color: var(--muted); margin: 8px 0 40px; }
+    .games { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+    .game {
+      display: block; padding: 28px 22px; border-radius: 24px; background: #fff; text-decoration: none; color: inherit;
+      box-shadow: 0 6px 20px rgba(196, 126, 190, .18); border: 2px solid #fff; transition: transform .15s, box-shadow .15s;
+    }
+    .game:hover, .game:focus-visible { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(196, 126, 190, .28); outline: none; border-color: #e8d4ff; }
+    .game .icon { font-size: 3rem; }
+    .game h2 { font-family: "Jua", sans-serif; font-weight: 400; font-size: 1.6rem; margin: 8px 0 4px; }
+    .game p { margin: 0; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>SCIENCE ARCADE</h1>
+    <p class="lead">과학 개념을 게임으로 배워요</p>
+    <nav class="games" aria-label="게임 목록">
+      <a class="game" href="superposition-bingo/">
+        <div class="icon" aria-hidden="true">⚛️</div>
+        <h2>중첩 빙고</h2>
+        <p>측정 전까지 한 칸에 두 숫자가 동시에!</p>
+      </a>
+    </nav>
+  </main>
+</body>
+</html>
