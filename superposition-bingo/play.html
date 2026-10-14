@@ -88,7 +88,7 @@
         <p class="caller-label" id="caller-by">방금 측정된 숫자</p>
         <p class="caller-number" id="caller-number" aria-live="assertive">–</p>
         <div class="turn-box" id="turn-box">
-          <p class="turn-name" id="turn-name"></p>
+          <p class="turn-name"><span id="turn-name"></span> <span class="turn-left" id="turn-left"></span></p>
           <div class="turn-bar"><span id="turn-bar"></span></div>
         </div>
         <div class="pending" id="pending" aria-label="아직 누르지 않은 숫자"></div>
@@ -143,6 +143,7 @@
     <h1 id="end-title" class="end-title">게임 종료!</h1>
     <p class="my-result" id="my-result"></p>
     <div class="podium" id="podium"></div>
+    <p class="next-hint" id="next-hint" hidden>선생님이 “한 판 더”를 누르면 자동으로 다음 판으로 넘어가요.</p>
   </main>
 
   <div class="toasts" id="toasts" role="status" aria-live="polite"></div>

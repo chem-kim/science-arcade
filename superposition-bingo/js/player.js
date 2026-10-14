@@ -24,7 +24,10 @@
   let seenNotice = null;
   let announced = new Set();
   let callSent = false;
-  let turnKey = null;     // 차례가 바뀌었는지 구분 (같은 사람 차례가 연달아 와도 새 차례로 인식)
+  let turnKey = null;
+  let myCall = null;      // 내가 방금 측정한 숫자 { n, at } → 측정되면 내 판에 바로 표시
+  let timeoutSent = null;
+  let round = null;       // 같은 방에서 몇 번째 판인지 (바뀌면 새 판 준비) // 진행자에게 '시간 초과'를 알린 마감 시각 (중복 전송 방지)     // 차례가 바뀌었는지 구분 (같은 사람 차례가 연달아 와도 새 차례로 인식)
   let unsub = null;
 
   const asArray = v => (Array.isArray(v) ? v : v ? Object.values(v) : []);
@@ -59,10 +62,12 @@
       expected: $('#meter-expected'),
     },
   }, {
-    onMark: () => {
+    onMark: (index, n, auto) => {
       me.marked = marker.markedIndices();
       save();
       room.updatePlayer(me.pid, { marked: me.marked });
+      // 내 차례에 '측정된 칸'을 누르면 표시만 됨 → 측정은 아직이라고 알려줌
+      if (!auto && isMyTurn() && !(myCall && myCall.n === n)) toast('표시했어요! 이제 반짝이는 칸을 눌러 측정하세요.', 'info');
     },
     onBingo: () => toast('빙고! 선생님 화면에서 순위를 확인하세요 🎉', 'bingo', 4000),
     onCallTap: (i, e) => callFromBoard(i, e),
@@ -116,6 +121,9 @@
       return show('screen-join');
     }
     S = s;
+    const r = s.round || 1;
+    if (round !== null && r !== round) newRound();
+    round = r;
     if (s.notice && s.notice.id !== seenNotice) {
       if (seenNotice !== null || s.status !== 'lobby') toast(s.notice.text);
       seenNotice = s.notice.id;
@@ -125,6 +133,22 @@
     if (!s.turnOrder.includes(me.pid)) return show('screen-late');
     if (s.status === 'playing' || s.status === 'finishing') return onPlaying();
     if (s.status === 'ended') return onEnded();
+  }
+
+  /** 같은 방에서 한 판 더: 지난 판 기록을 지우고, 빙고판은 그대로 불러와 다시 준비하게 함 */
+  function newRound() {
+    marker.stop();
+    marker.board = null;
+    seenCalls = 0;
+    announced = new Set();
+    turnKey = null;
+    myCall = null;
+    callSent = false;
+    timeoutSent = null;
+    me.ready = false;
+    me.marked = [];
+    save();
+    toast('한 판 더! 빙고판을 고치거나 바로 "준비 완료"를 눌러 주세요.', 'info', 5000);
   }
 
   function onLobby() {
@@ -154,6 +178,11 @@
     for (; seenCalls < S.calls.length; seenCalls++) {
       const n = S.calls[seenCalls];
       marker.receive(n);
+      // 내가 측정한 숫자는 어디 있는지 알고 있으니 바로 표시
+      if (myCall && myCall.n === n) {
+        if (marker.pending.has(n)) marker.mark(n, false);
+        myCall = null;
+      }
       $('#caller-by').textContent = S.callBy[seenCalls] === me.pid ? '내가 측정했어요' : `${nameOf(S.callBy[seenCalls])}님이 측정했어요`;
     }
 
@@ -172,6 +201,7 @@
     marker.stop();
     const mine = S.winners.find(w => w.pid === me.pid);
     $('#my-result').textContent = mine ? `${PODIUM[mine.rank - 1]} ${mine.rank}등! ${mine.call}번째 측정에서 빙고했어요.` : '수고했어요! 다음 판에 도전해 봐요.';
+    $('#next-hint').hidden = false;
     const groups = [1, 2, 3].map(rank => S.winners.filter(w => w.rank === rank));
     $('#podium').innerHTML = [2, 1, 3].map(rank => {
       const g = groups[rank - 1];
@@ -180,7 +210,6 @@
         <div class="block"><span class="medal">${PODIUM[rank - 1]}</span><span>${rank}등</span></div>
       </div>`;
     }).join('');
-    store.removeItem(saveKey(me.code));
     show('screen-end');
   }
 
@@ -202,17 +231,28 @@
       buildCallPad();
       // 내 판에 고를 숫자가 없으면 숫자표를 바로 펼침
       $('#other-pad').open = callableOnBoard().length === 0;
-      if (navigator.vibrate) navigator.vibrate(150);
+      // 진동은 학생이 화면을 한 번이라도 누른 뒤에만 허용됨
+      if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(150);
     }
     turnKey = key;
     panel.hidden = !myTurn;
-    $('#play-board').classList.toggle('is-calling', isMyTurn());
+    renderCallable();
     if (S.status === 'finishing') {
       $('#turn-name').textContent = '순위가 정해졌어요! 남은 칸을 눌러 주세요';
     } else {
       $('#turn-name').textContent = myTurn ? '👉 내 차례예요!' : `${nameOf(S.turnPid)}님 차례`;
     }
     $('#turn-box').classList.toggle('is-mine', myTurn);
+  }
+
+  /** 내 차례에 측정할 수 있는 칸(아직 측정되지 않은 칸)만 반짝이게 */
+  function renderCallable() {
+    const on = isMyTurn();
+    $('#play-board').classList.toggle('is-calling', on);
+    marker.board.forEach((c, i) => {
+      marker.view.cells[i].classList.toggle('is-callable', on && c.result == null);
+      marker.view.cells[i].classList.toggle('is-sending', !!myCall && c.values.includes(myCall.n));
+    });
   }
 
   function buildCallPad() {
@@ -232,10 +272,23 @@
   function sendCall(n) {
     if (!isMyTurn() || S.calls.includes(n)) return;
     callSent = true;
+    myCall = { n, at: Date.now() };
     const pad = $('#call-pad');
     pad.querySelectorAll('.num').forEach(x => { x.disabled = true; x.classList.toggle('is-current', Number(x.textContent) === n); });
-    $('#play-board').classList.remove('is-calling');
+    renderCallable();
     room.send({ type: 'call', pid: me.pid, n });
+  }
+
+  /** 측정 요청이 3초 안에 반영되지 않으면 다시 누를 수 있게 */
+  function checkCallStuck() {
+    if (!myCall || Date.now() - myCall.at < 3000) return;
+    const stillMine = S.status === 'playing' && S.turnPid === me.pid && !S.calls.includes(myCall.n);
+    myCall = null;
+    if (!stillMine) return;
+    callSent = false;
+    buildCallPad();
+    renderCallable();
+    toast('측정이 전달되지 않았어요. 다시 눌러 주세요.');
   }
 
   /** 내 차례에 빙고판의 칸을 누르면 그 숫자를 측정. 중첩칸은 누른 쪽(사선 위/아래) 숫자 */
@@ -264,11 +317,30 @@
   }
 
   setInterval(() => {
-    if (!S || S.status !== 'playing') return;
-    const left = Math.max(0, S.turnDeadline - backend.now());
-    $('#turn-bar').style.transform = `scaleX(${left / TURN_MS})`;
-    $('#my-turn-sec').textContent = `(${Math.ceil(left / 1000)}초)`;
+    if (!S || !room) return;
+    const now = backend.now();
+    if (S.status === 'playing') {
+      const left = Math.max(0, S.turnDeadline - now);
+      $('#turn-bar').style.transform = `scaleX(${left / TURN_MS})`;
+      $('#my-turn-sec').textContent = `(${Math.ceil(left / 1000)}초)`;
+      $('#turn-left').textContent = `${Math.ceil(left / 1000)}초`;
+      checkCallStuck();
+    } else if (S.status === 'finishing') {
+      const left = Math.max(0, (S.finishDeadline || 0) - now);
+      $('#turn-left').textContent = `${Math.ceil(left / 1000)}초`;
+    }
+    // 진행자 화면이 늦게 반응해도(백그라운드 등) 시간이 지나면 학생 쪽에서 알려 멈춤을 막음
+    const deadline = S.status === 'playing' ? S.turnDeadline : S.status === 'finishing' ? S.finishDeadline : null;
+    if (deadline && now > deadline + 1500 && timeoutSent !== deadline) {
+      timeoutSent = deadline;
+      room.send({ type: 'timeout', pid: me.pid, deadline });
+    }
   }, 250);
+
+  // 휴대폰 화면이 꺼지거나 다른 앱으로 가면 '자리 비움' → 내 차례를 기다리지 않고 바로 넘김
+  document.addEventListener('visibilitychange', () => {
+    if (room && me && marker.board) room.updatePlayer(me.pid, { online: !document.hidden });
+  });
 
   // ---------- 버튼 ----------
 

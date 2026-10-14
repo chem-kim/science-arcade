@@ -9,7 +9,7 @@
   const R = window.SBRules;
   const { $, show, toast, escapeHtml, bindActions, renderHistory } = window.SBUI;
   const TURN_MS = 20000;          // 차례 제한 시간
-  const FINISH_WAIT_MS = 32000;   // 순위 확정 뒤, 학생들이 마지막 칸을 누를 시간 (30초 자동 표시 + 여유)
+  const FINISH_WAIT_MS = 10000;   // 순위 확정 뒤, 빙고한 학생들이 마지막 칸을 누를 시간 (순위는 이미 정해져 있음)
   const SAVE_KEY = 'sb-host' + (new URLSearchParams(location.search).get('net') === 'local' ? '-local' : '');
   const PODIUM = ['🥇', '🥈', '🥉'];
 
@@ -45,10 +45,12 @@
       turnOrder: H.turnOrder,
       turnPid: turnPid(),
       turnDeadline: H.turnDeadline,
+      finishDeadline: H.finishDeadline,
       calls: H.calls,
       callBy: H.callBy,
       winners: H.winners,
       notice: H.notice,
+      round: H.round || 1,
     };
   }
 
@@ -83,7 +85,7 @@
     H = {
       code, superCount, status: 'lobby',
       turnOrder: [], turnIdx: 0, turnDeadline: 0,
-      calls: [], callBy: [], winners: [], finishDeadline: 0, notice: null,
+      calls: [], callBy: [], winners: [], finishDeadline: 0, notice: null, round: 1,
     };
     attach();
     publish(true);
@@ -154,7 +156,15 @@
   }
 
   function handleMessage(msg) {
-    if (!H || !msg || msg.type !== 'call') return;
+    if (!H || !msg) return;
+    // 학생 쪽에서 본 '시간 초과' (이 화면이 백그라운드라 타이머가 늦어도 진행되게)
+    if (msg.type === 'timeout') {
+      const now = backend.now();
+      if (H.status === 'playing' && msg.deadline === H.turnDeadline && now > H.turnDeadline) skipTurn('시간이 지나');
+      else if (H.status === 'finishing' && msg.deadline === H.finishDeadline && now > H.finishDeadline) finish();
+      return;
+    }
+    if (msg.type !== 'call') return;
     const n = Number(msg.n);
     if (H.status !== 'playing' || msg.pid !== turnPid()) return;
     if (!(n >= 1 && n <= R.MAX_NUMBER) || H.calls.includes(n)) return;
@@ -217,7 +227,7 @@
     if (H.status === 'playing') {
       const cur = players[turnPid()];
       const anyoneOnline = H.turnOrder.some(pid => players[pid] && players[pid].online !== false);
-      if ((!cur || cur.online === false) && anyoneOnline) skipTurn('연결이 끊겨');
+      if ((!cur || cur.online === false) && anyoneOnline) skipTurn('자리를 비워(화면 꺼짐·연결 끊김)');
       else if (now > H.turnDeadline) skipTurn('시간이 지나');
     } else if (H.status === 'finishing') {
       if (H.winners.every(w => w.confirmed) || now > H.finishDeadline) finish();
@@ -347,6 +357,16 @@
     'start-game': startGame,
     'skip-turn': () => skipTurn('교사 판단으로'),
     'end-game': endGameNow,
+    // 같은 방·같은 참가자로 다시: 대기실로 돌아가고, 학생들은 빙고판을 확인한 뒤 다시 준비
+    'rematch': () => {
+      H = {
+        ...H, status: 'lobby', round: (H.round || 1) + 1,
+        turnOrder: [], turnIdx: 0, turnDeadline: 0,
+        calls: [], callBy: [], winners: [], finishDeadline: 0, notice: null,
+      };
+      playerList().forEach(p => room.updatePlayer(p.pid, { ready: false, marked: [] }));
+      publish(true);
+    },
     'new-game': async () => {
       clearInterval(loopTimer);
       unsubs.forEach(u => u());
