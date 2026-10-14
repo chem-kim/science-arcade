@@ -43,12 +43,13 @@
       values: superIdx.has(i) ? [null, null] : [null],
       result: null,   // 측정되어 확정된 숫자 (중첩칸은 둘 중 하나)
       marked: false,  // 플레이어가 표시했는지
+      missed: false,  // 30초 안에 표시하지 못해 놓친 칸 (이번 판에서 채울 수 없음)
     }));
   }
 
   /** 숫자 배열만으로 빙고판 복원 (저장·전송된 판) */
   function boardFromValues(values) {
-    return values.map(vs => ({ super: vs.length === 2, values: vs.slice(), result: null, marked: false }));
+    return values.map(vs => ({ super: vs.length === 2, values: vs.slice(), result: null, marked: false, missed: false }));
   }
 
   function usedNumbers(board) {
@@ -105,9 +106,20 @@
     return Number.isFinite(best) ? best : null;
   }
 
-  /** 표시된 칸(marked: boolean 배열) 기준으로 빙고까지 남은 최소 칸 수 */
-  function cellsToBingo(marked) {
-    return Math.min(...LINES.map(line => line.filter(i => !marked[i]).length));
+  /**
+   * 표시된 칸(marked: boolean 배열) 기준으로 빙고까지 남은 최소 칸 수
+   * 놓친 칸(missed)이 들어간 줄은 완성할 수 없으므로 제외 → 모든 줄이 막히면 Infinity
+   */
+  function cellsToBingo(marked, missed = []) {
+    const live = LINES.filter(line => !line.some(i => missed[i]));
+    return live.length ? Math.min(...live.map(line => line.filter(i => !marked[i]).length)) : Infinity;
+  }
+
+  /** 표시한 칸만으로 완성한 줄 중, 가장 이른 줄이 몇 번째 측정으로 채워졌는지 (없으면 null) */
+  function markedBingoCall(values, calls, marked) {
+    const fill = fillOrder(values, calls).map((f, i) => (marked[i] ? f : Infinity));
+    const best = Math.min(...LINES.map(line => Math.max(...line.map(i => fill[i]))));
+    return Number.isFinite(best) ? best : null;
   }
 
   /** 공동 순위: 같은 측정에서 빙고하면 같은 등수 (1, 1, 3 …) */
@@ -125,7 +137,9 @@
     const called = new Set(calls);
     const remaining = range(1, MAX_NUMBER).filter(n => !called.has(n));
     const left = remaining.length;
-    const open = board.map(c => c.result == null);
+    const open = board.map(c => c.result == null && !c.dead);
+    // 놓친 칸(dead)이 들어간 줄은 빙고할 수 없음
+    const lines = LINES.filter(line => !line.some(i => board[i].dead));
     const cell = board.map((c, i) => (open[i] && left ? c.values.filter(v => !called.has(v)).length / left : null));
 
     const onBoard = new Set();
@@ -133,9 +147,9 @@
     const fillNext = left ? onBoard.size / left : 0;
 
     // 한 칸만 남은 줄들의 마지막 칸 숫자 → 그중 하나가 나오면 빙고
-    const done = LINES.some(line => line.every(i => !open[i]));
+    const done = lines.some(line => line.every(i => !open[i]));
     const winning = new Set();
-    LINES.forEach(line => {
+    lines.forEach(line => {
       const rest = line.filter(i => open[i]);
       if (rest.length === 1) board[rest[0]].values.forEach(v => winning.add(v));
     });
@@ -143,7 +157,8 @@
 
     // 몬테카를로: 빙고까지 앞으로 몇 번 더 측정해야 하는지 평균
     let expected = 0;
-    if (!done && left) {
+    if (!lines.length) expected = Infinity;
+    else if (!done && left) {
       const cellOf = new Map();
       board.forEach((c, i) => { if (open[i]) c.values.forEach(v => cellOf.set(v, i)); });
       let total = 0;
@@ -155,13 +170,13 @@
           const i = cellOf.get(n);
           if (i == null || filled[i]) continue;
           filled[i] = true;
-          if (LINES.some(line => line.includes(i) && line.every(j => filled[j]))) break;
+          if (lines.some(line => line.includes(i) && line.every(j => filled[j]))) break;
         }
         total += steps;
       }
       expected = total / trials;
     }
-    return { cell, fillNext, bingoNext, expected, left, done };
+    return { cell, fillNext, bingoNext, expected, left, done, blocked: !lines.length };
   }
 
   // 두 대각선 위의 칸 (가운데 칸은 4줄, 나머지 대각선 칸은 3줄에 속함)
@@ -199,6 +214,6 @@
   global.SBRules = {
     SIZE, CELL_COUNT, MAX_NUMBER, DEFAULT_SUPER_COUNT, LINES,
     shuffle, range, createBoard, boardFromValues, usedNumbers, isComplete, autoFill, measure, completedLines,
-    fillOrder, bingoCallIndex, cellsToBingo, rankByCall, probabilities, DIAGONAL, simulateOnce, simulate,
+    fillOrder, bingoCallIndex, markedBingoCall, cellsToBingo, rankByCall, probabilities, DIAGONAL, simulateOnce, simulate,
   };
 })(window);

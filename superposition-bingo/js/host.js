@@ -9,7 +9,7 @@
   const R = window.SBRules;
   const { $, show, toast, escapeHtml, bindActions, renderHistory } = window.SBUI;
   const TURN_MS = 20000;          // 차례 제한 시간
-  const FINISH_WAIT_MS = 10000;   // 순위 확정 뒤, 빙고한 학생들이 마지막 칸을 누를 시간 (순위는 이미 정해져 있음)
+  const FINISH_WAIT_MS = 10000;   // 3등까지 정해진 뒤, 같은 측정 차례 안에 빙고를 완성하는 학생(공동 순위)을 기다리는 시간
   const SAVE_KEY = 'sb-host' + (new URLSearchParams(location.search).get('net') === 'local' ? '-local' : '');
   const PODIUM = ['🥇', '🥈', '🥉'];
 
@@ -30,11 +30,13 @@
   const playerList = () => Object.entries(players).filter(([, p]) => p && p.name).map(([pid, p]) => ({ pid, ...p }));
   const turnPid = () => (H.status === 'playing' ? H.turnOrder[H.turnIdx] : null);
   const nameOf = pid => (players[pid] && players[pid].name) || '?';
-  const markedBools = p => {
+  const toBools = list => {
     const m = new Array(R.CELL_COUNT).fill(false);
-    asArray(p && p.marked).forEach(i => { m[i] = true; });
+    asArray(list).forEach(i => { m[i] = true; });
     return m;
   };
+  const markedBools = p => toBools(p && p.marked);
+  const missedBools = p => toBools(p && p.missed);
 
   function publicState() {
     return {
@@ -128,6 +130,7 @@
     if (notReady && !confirm(`아직 준비하지 않은 학생 ${notReady}명은 이번 게임에 참여하지 못해요. 시작할까요?`)) return;
     H.turnOrder = R.shuffle(ready.map(p => p.pid));
     H.turnIdx = -1;
+    H.bingos = {};
     H.status = 'playing';
     advanceTurn();
     publish(true);
@@ -171,53 +174,55 @@
     H.calls.push(n);
     H.callBy.push(msg.pid);
     H.notice = null;
-    evaluate();
     if (H.status === 'playing') advanceTurn();
+    checkEnd();
     publish();
   }
 
-  /** 측정 순서로 각 학생이 몇 번째 측정에서 빙고인지 계산 → 공동 순위 */
-  function evaluate() {
-    const entries = H.turnOrder
-      .filter(pid => players[pid] && players[pid].values)
-      .map(pid => ({ pid, name: nameOf(pid), call: R.bingoCallIndex(asArray(players[pid].values).map(asArray), H.calls) }))
-      .filter(e => e.call != null);
-    const prev = new Map(H.winners.map(w => [w.pid, w]));
-    H.winners = R.rankByCall(entries)
-      .filter(e => e.rank <= 3)
-      .map(e => ({ ...e, confirmed: prev.has(e.pid) ? prev.get(e.pid).confirmed : false }));
-    checkConfirmed();
+  /**
+   * 빙고 판정: 학생이 직접 표시한 칸으로 한 줄을 완성해야 인정
+   * 순위 기준 = 표시를 마친 시점까지의 측정 수 (같은 측정 차례 안에 완성하면 공동 순위)
+   */
+  function updateBingos() {
+    H.bingos = H.bingos || {};
+    H.turnOrder.forEach(pid => {
+      const p = players[pid];
+      if (!p || !p.values || H.bingos[pid] != null) return;
+      const lineCall = R.markedBingoCall(asArray(p.values).map(asArray), H.calls, markedBools(p));
+      if (lineCall == null) return;
+      const reported = Number.isFinite(p.bingoAt) ? p.bingoAt : H.calls.length;
+      H.bingos[pid] = Math.min(H.calls.length, Math.max(lineCall, reported));
+      toast(`🎉 ${nameOf(pid)} 빙고!`, 'bingo', 4000);
+    });
+    const entries = Object.entries(H.bingos).map(([pid, call]) => ({ pid, name: nameOf(pid), call }));
+    H.winners = R.rankByCall(entries).filter(e => e.rank <= 3);
+  }
 
+  /** 3등까지 정해졌거나, 더 빙고할 수 있는 학생이 없거나, 숫자를 다 불렀으면 마무리 */
+  function checkEnd() {
+    if (H.status !== 'playing') return;
+    H.bingos = H.bingos || {};
     const enough = H.winners.length >= Math.min(3, H.turnOrder.length);
-    if (enough || H.calls.length >= R.MAX_NUMBER) {
+    const anyoneCanBingo = H.turnOrder.some(pid => H.bingos[pid] == null
+      && R.cellsToBingo(markedBools(players[pid]), missedBools(players[pid])) !== Infinity);
+    if (enough || !anyoneCanBingo || H.calls.length >= R.MAX_NUMBER) {
       H.status = 'finishing';
-      H.finishDeadline = backend.now() + FINISH_WAIT_MS;
+      // 숫자를 다 불렀으면 마지막 숫자를 체크할 시간(30초)을 줌
+      H.finishDeadline = backend.now() + (enough || !anyoneCanBingo ? FINISH_WAIT_MS : 31000);
     }
   }
 
-  /** 학생이 실제로 칸을 눌러 한 줄을 완성했는지 확인 → 빙고 발표 */
-  function checkConfirmed() {
-    let changed = false;
-    H.winners.forEach(w => {
-      if (w.confirmed) return;
-      if (R.cellsToBingo(markedBools(players[w.pid])) === 0) {
-        w.confirmed = true;
-        changed = true;
-        toast(`🎉 ${w.name} 빙고! (${w.rank}등)`, 'bingo', 4000);
-      }
-    });
-    return changed;
-  }
-
   function finish() {
-    H.winners.forEach(w => { w.confirmed = true; });
     H.status = 'ended';
     publish();
   }
 
   function onPlayersChanged() {
     if (!H) return;
-    if (H.status === 'playing' || H.status === 'finishing') checkConfirmed();
+    if (H.status === 'playing' || H.status === 'finishing') {
+      updateBingos();
+      checkEnd();
+    }
     publish();
   }
 
@@ -230,7 +235,7 @@
       if ((!cur || cur.online === false) && anyoneOnline) skipTurn('자리를 비워(화면 꺼짐·연결 끊김)');
       else if (now > H.turnDeadline) skipTurn('시간이 지나');
     } else if (H.status === 'finishing') {
-      if (H.winners.every(w => w.confirmed) || now > H.finishDeadline) finish();
+      if (now > H.finishDeadline) finish();
     }
     renderTimer();
   }
@@ -298,22 +303,22 @@
     renderHistory($('#host-history'), H.calls);
 
     $('#host-winners').innerHTML = H.winners.length
-      ? H.winners.map(w => `<li class="${w.confirmed ? '' : 'is-waiting'}">
+      ? H.winners.map(w => `<li>
           <span class="medal">${PODIUM[w.rank - 1]}</span> ${escapeHtml(w.name)}
-          <span class="muted small">${w.call}번째 측정${w.confirmed ? '' : ' · 확인 중'}</span></li>`).join('')
+          <span class="muted small">${w.call}번째 측정</span></li>`).join('')
       : '<li class="muted">아직 빙고가 없어요</li>';
 
     const winnerRank = new Map(H.winners.map(w => [w.pid, w.rank]));
     const rows = H.turnOrder.map(pid => ({
       pid, name: nameOf(pid), online: players[pid] && players[pid].online !== false,
-      left: R.cellsToBingo(markedBools(players[pid])), rank: winnerRank.get(pid),
-    })).sort((a, b) => (a.rank || 99) - (b.rank || 99) || a.left - b.left);
+      left: R.cellsToBingo(markedBools(players[pid]), missedBools(players[pid])), rank: winnerRank.get(pid),
+    })).sort((a, b) => (a.rank || 99) - (b.rank || 99) || Math.min(a.left, 99) - Math.min(b.left, 99));
     const tp = turnPid();
     $('#host-status').innerHTML = rows.map(r => `
       <li class="${r.pid === tp ? 'is-turn' : ''} ${r.online ? '' : 'is-offline'}">
         <span class="name">${r.pid === tp ? '👉 ' : ''}${escapeHtml(r.name)}</span>
-        <span class="dots">${r.rank ? PODIUM[r.rank - 1] : '●'.repeat(R.SIZE - r.left).padEnd(R.SIZE, '○')}</span>
-        <span class="left">${r.rank ? '빙고!' : `${r.left}칸`}</span>
+        <span class="dots">${r.rank ? PODIUM[r.rank - 1] : r.left === Infinity ? '✕' : '●'.repeat(R.SIZE - r.left).padEnd(R.SIZE, '○')}</span>
+        <span class="left">${r.rank ? '빙고!' : r.left === Infinity ? '빙고 불가' : r.left === 0 ? '빙고!' : `${r.left}칸`}</span>
       </li>`).join('');
     renderTimer();
   }
@@ -323,7 +328,7 @@
     const box = $('#turn-box');
     if (H.status === 'finishing') {
       box.classList.add('is-finishing');
-      $('#turn-name').textContent = '순위가 정해졌어요! 마지막 칸을 누르는 중…';
+      $('#turn-name').textContent = '측정이 끝났어요! 결과를 정리하는 중…';
       const left = Math.max(0, H.finishDeadline - backend.now());
       $('#turn-bar').style.transform = `scaleX(${left / FINISH_WAIT_MS})`;
       $('#turn-sec').textContent = `${Math.ceil(left / 1000)}초`;
@@ -362,9 +367,9 @@
       H = {
         ...H, status: 'lobby', round: (H.round || 1) + 1,
         turnOrder: [], turnIdx: 0, turnDeadline: 0,
-        calls: [], callBy: [], winners: [], finishDeadline: 0, notice: null,
+        calls: [], callBy: [], winners: [], bingos: {}, finishDeadline: 0, notice: null,
       };
-      playerList().forEach(p => room.updatePlayer(p.pid, { ready: false, marked: [] }));
+      playerList().forEach(p => room.updatePlayer(p.pid, { ready: false, marked: [], missed: [], bingoAt: null }));
       publish(true);
     },
     'new-game': async () => {

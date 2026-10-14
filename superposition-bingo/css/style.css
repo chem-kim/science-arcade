@@ -279,6 +279,19 @@ button { font: inherit; color: inherit; }
 }
 @keyframes win { 50% { box-shadow: 0 0 0 2px var(--win), 0 0 28px rgba(255, 174, 66, .8); transform: scale(1.04); } }
 
+/* 놓친 칸: 측정됐지만 30초 안에 체크하지 못함 → 이번 판에서 채울 수 없음 */
+.cell.is-missed { background: repeating-linear-gradient(135deg, #f4eef4 0 6px, #ece3ec 6px 12px); border-color: #ddd0dd; }
+.cell.is-missed .val { color: #b6a8bf; text-decoration: line-through; }
+.cell.is-missed .val.is-chosen { color: #a596ae; text-shadow: none; }
+.cell.is-missed::before {
+  content: "✕"; position: absolute; right: 6%; top: 2%;
+  font-size: .5em; color: #c9a3b6;
+}
+.cell.is-super.is-missed { background: repeating-linear-gradient(135deg, #f4eef4 0 6px, #ece3ec 6px 12px); }
+.states li.is-missed { background: #f4eef4; }
+.states li.is-missed .psi { color: #a596ae; }
+.toast.miss { border-color: #e5c3d4; background: #fbf4f8; }
+
 .cell.is-shake { animation: shake .35s; }
 @keyframes shake {
   25% { transform: translateX(-5px); }

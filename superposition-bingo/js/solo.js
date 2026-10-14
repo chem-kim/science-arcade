@@ -39,11 +39,21 @@
       marker.stop();
       $('#btn-measure').disabled = true;
       toast('빙고!', 'bingo');
+      $('#result-title').textContent = '빙고!';
       const winCells = [...new Set(lines.flat())];
       const superInLine = winCells.filter(i => marker.board[i].super).length;
       $('#result-summary').innerHTML =
         `<strong>${marker.calls.length}번째 측정</strong>에서 빙고를 완성했어요.<br>` +
         `완성한 줄에 들어간 중첩칸: <strong>${superInLine}개</strong>`;
+      setTimeout(() => $('#result-dialog').showModal(), 1400);
+    },
+    // 놓친 칸 때문에 모든 줄이 막힘 → 이번 판은 빙고 불가
+    onBlocked: () => {
+      marker.stop();
+      $('#btn-measure').disabled = true;
+      $('#result-title').textContent = '아쉬워요!';
+      $('#result-summary').innerHTML =
+        `놓친 칸 때문에 <strong>모든 줄이 막혔어요</strong>.<br>측정된 숫자는 30초 안에 꼭 체크해요!`;
       setTimeout(() => $('#result-dialog').showModal(), 1400);
     },
   });

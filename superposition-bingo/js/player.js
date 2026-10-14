@@ -62,14 +62,26 @@
       expected: $('#meter-expected'),
     },
   }, {
-    onMark: (index, n, auto) => {
+    onMark: (index, n) => {
       me.marked = marker.markedIndices();
       save();
       room.updatePlayer(me.pid, { marked: me.marked });
       // 내 차례에 '측정된 칸'을 누르면 표시만 됨 → 측정은 아직이라고 알려줌
-      if (!auto && isMyTurn() && !(myCall && myCall.n === n)) toast('표시했어요! 이제 반짝이는 칸을 눌러 측정하세요.', 'info');
+      if (isMyTurn() && !(myCall && myCall.n === n)) toast('표시했어요! 이제 반짝이는 칸을 눌러 측정하세요.', 'info');
     },
-    onBingo: () => toast('빙고! 선생님 화면에서 순위를 확인하세요 🎉', 'bingo', 4000),
+    onMiss: () => {
+      me.missed = marker.missedIndices();
+      save();
+      room.updatePlayer(me.pid, { missed: me.missed });
+    },
+    // 빙고 시점 = 내가 표시를 마쳤을 때까지 본 측정 수 (같은 측정 차례 안에 완성하면 공동 순위)
+    onBingo: () => {
+      me.bingoAt = S.calls.length;
+      save();
+      room.updatePlayer(me.pid, { bingoAt: me.bingoAt });
+      toast('빙고! 선생님 화면에서 순위를 확인하세요 🎉', 'bingo', 4000);
+    },
+    onBlocked: () => toast('놓친 칸 때문에 모든 줄이 막혔어요 😢 그래도 측정에는 계속 참여해요!', 'miss', 5000),
     onCallTap: (i, e) => callFromBoard(i, e),
   });
 
@@ -147,6 +159,8 @@
     timeoutSent = null;
     me.ready = false;
     me.marked = [];
+    me.missed = [];
+    me.bingoAt = null;
     save();
     toast('한 판 더! 빙고판을 고치거나 바로 "준비 완료"를 눌러 주세요.', 'info', 5000);
   }
@@ -168,9 +182,9 @@
 
   function onPlaying() {
     if (!marker.board) {
-      marker.restore(R.boardFromValues(me.values), S.calls, me.marked || []);
+      marker.restore(R.boardFromValues(me.values), S.calls, me.marked || [], me.missed || []);
       seenCalls = S.calls.length;
-      S.winners.filter(w => w.confirmed).forEach(w => announced.add(w.pid));
+      S.winners.forEach(w => announced.add(w.pid));
       show('screen-play');
     }
 
@@ -180,7 +194,7 @@
       marker.receive(n);
       // 내가 측정한 숫자는 어디 있는지 알고 있으니 바로 표시
       if (myCall && myCall.n === n) {
-        if (marker.pending.has(n)) marker.mark(n, false);
+        if (marker.pending.has(n)) marker.mark(n);
         myCall = null;
       }
       $('#caller-by').textContent = S.callBy[seenCalls] === me.pid ? '내가 측정했어요' : `${nameOf(S.callBy[seenCalls])}님이 측정했어요`;
@@ -188,7 +202,7 @@
 
     // 빙고 발표
     S.winners.forEach(w => {
-      if (!w.confirmed || announced.has(w.pid)) return;
+      if (announced.has(w.pid)) return;
       announced.add(w.pid);
       if (w.pid === me.pid) toast(`🎉 축하해요! ${w.rank}등이에요!`, 'bingo', 5000);
       else toast(`🎉 ${w.name} 빙고! (${w.rank}등)`, 'bingo', 4000);
@@ -238,7 +252,7 @@
     panel.hidden = !myTurn;
     renderCallable();
     if (S.status === 'finishing') {
-      $('#turn-name').textContent = '순위가 정해졌어요! 남은 칸을 눌러 주세요';
+      $('#turn-name').textContent = '측정이 끝났어요! 남은 칸을 30초 안에 눌러 주세요';
     } else {
       $('#turn-name').textContent = myTurn ? '👉 내 차례예요!' : `${nameOf(S.turnPid)}님 차례`;
     }
@@ -362,8 +376,10 @@
       me.values = setup.board.map(c => c.values.slice());
       me.ready = true;
       me.marked = [];
+      me.missed = [];
+      me.bingoAt = null;
       save();
-      room.updatePlayer(me.pid, { values: me.values, ready: true, marked: [] });
+      room.updatePlayer(me.pid, { values: me.values, ready: true, marked: [], missed: [], bingoAt: null });
       onLobby();
     },
     'unready': () => {

@@ -103,14 +103,16 @@
 
     refreshPlayCell(cell, node, i) {
       const btn = node.querySelector('.cell-btn');
+      const settled = cell.marked || cell.missed; // 체크했거나 놓쳐서 더는 바뀌지 않는 칸
       btn.querySelectorAll('.val').forEach((span, s) => {
         span.textContent = cell.values[s];
-        const chosen = cell.marked && cell.result === cell.values[s];
+        const chosen = settled && cell.result === cell.values[s];
         span.classList.toggle('is-chosen', chosen);
-        span.classList.toggle('is-dropped', cell.super && cell.marked && !chosen);
+        span.classList.toggle('is-dropped', cell.super && settled && !chosen);
       });
       node.classList.toggle('is-marked', cell.marked);
-      node.classList.toggle('is-collapsed', cell.super && cell.marked);
+      node.classList.toggle('is-missed', !!cell.missed);
+      node.classList.toggle('is-collapsed', cell.super && settled);
       node.classList.toggle('is-win', this.winCells.has(i));
 
       const p = this.probs ? this.probs[i] : null;
@@ -120,11 +122,11 @@
 
       let label = `${position(i)}, `;
       if (cell.super) {
-        label += cell.marked
-          ? `중첩칸, ${cell.result}(으)로 확정됨`
+        label += settled
+          ? `중첩칸, ${cell.result}(으)로 확정됨${cell.missed ? ', 놓침' : ''}`
           : `중첩칸, ${cell.values[0]}과 ${cell.values[1]}이 중첩된 상태`;
       } else {
-        label += `${cell.values[0]}${cell.marked ? ', 표시됨' : ''}`;
+        label += `${cell.values[0]}${cell.marked ? ', 표시됨' : cell.missed ? ', 놓침' : ''}`;
       }
       btn.setAttribute('aria-label', label);
     }
