@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>원소 비</title>
+  <meta name="description" content="떨어지는 원소의 기호를 입력해 터뜨리며 주기율표 원소 기호를 외우는 게임">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 홈 -->
+  <main id="screen-home" class="screen is-active" aria-labelledby="home-title">
+    <header class="hero">
+      <p class="eyebrow">SCIENCE ARCADE</p>
+      <h1 id="home-title">원소 <span class="grad">비</span></h1>
+      <p class="lead">떨어지는 원소가 바닥에 닿기 전에 <strong>원소 기호</strong>를 입력해 터뜨리세요!</p>
+      <div class="rain-demo" aria-hidden="true">
+        <span class="cat-nonmetal">H</span><span class="cat-alkali">Na</span><span class="cat-halogen">Cl</span><span class="cat-transition">Fe</span>
+      </div>
+    </header>
+
+    <section class="card" aria-labelledby="solo-title">
+      <h2 id="solo-title">혼자 연습하기</h2>
+      <div class="opt">
+        <p class="opt-label">범위</p>
+        <div class="pills" role="radiogroup" aria-label="범위" id="opt-level">
+          <label class="pill"><input type="radio" name="level" value="basic" checked><span>기초 <small>1~20번</small></span></label>
+          <label class="pill"><input type="radio" name="level" value="challenge"><span>도전 <small>1~36번 + 자주 쓰는 원소</small></span></label>
+          <label class="pill"><input type="radio" name="level" value="all"><span>마스터 <small>전체 118개</small></span></label>
+          <label class="pill"><input type="radio" name="level" value="latin"><span>라틴어 특강 <small>Na, K, Fe…</small></span></label>
+        </div>
+      </div>
+      <div class="opt">
+        <p class="opt-label">문제</p>
+        <div class="pills" role="radiogroup" aria-label="문제 유형">
+          <label class="pill"><input type="radio" name="qtype" value="name2sym" checked><span>이름 → 기호</span></label>
+          <label class="pill"><input type="radio" name="qtype" value="sym2name"><span>기호 → 이름</span></label>
+          <label class="pill"><input type="radio" name="qtype" value="num2sym"><span>원자 번호 → 기호</span></label>
+        </div>
+      </div>
+      <div class="opt">
+        <p class="opt-label">순서</p>
+        <div class="pills" role="radiogroup" aria-label="출제 순서">
+          <label class="pill"><input type="radio" name="order" value="smart" checked><span>무작위 <small>틀린 원소가 더 자주</small></span></label>
+          <label class="pill"><input type="radio" name="order" value="song"><span>원자 번호 순서 <small>외움송</small></span></label>
+        </div>
+      </div>
+      <label class="check"><input type="checkbox" id="opt-hint" checked> 바닥 가까이 오면 첫 글자 힌트 보기</label>
+      <p class="best-line" id="best-line"></p>
+      <div class="row-actions">
+        <button class="btn btn-primary btn-lg" data-action="start">시작하기</button>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="battle-title">
+      <h2 id="battle-title">친구들과 대전</h2>
+      <div class="mode-grid">
+        <div class="mode-box">
+          <h3>🧑‍🏫 선생님</h3>
+          <p>방을 만들고 QR 코드를 화면에 띄우면, 실시간 순위와 우승자가 나와요.</p>
+          <a class="btn" href="host.html" data-keep-net>방 만들기</a>
+        </div>
+        <div class="mode-box">
+          <h3>🙋 학생</h3>
+          <p>방 코드와 닉네임으로 입장해요. 모두에게 같은 순서로 원소가 떨어져요.</p>
+          <a class="btn" href="play.html" data-keep-net>방 참가하기</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="card song-card" aria-labelledby="song-title">
+      <h2 id="song-title">외움송</h2>
+      <p class="song-line"><b>수헬리베</b> 붕탄질산 <b>플네</b> · <b>나마알규</b> 인황염아 <b>칼칼</b></p>
+      <p class="song-line muted">스타바크 망철코니 구아 · 갈저비셀 브크</p>
+      <p class="muted small">플루오린·소듐(나트륨)·포타슘(칼륨)처럼 바뀐 이름도 정답으로 인정해요. “원자 번호 순서”로 하면 외움송 순서대로 떨어져요.</p>
+    </section>
+
+    <section class="card" aria-labelledby="dex-title">
+      <h2 id="dex-title">내 원소 도감</h2>
+      <p class="dex-summary" id="dex-summary"></p>
+      <div class="pt-wrap"><div class="pt" id="dex-table" aria-label="주기율표 도감"></div></div>
+      <ul class="pt-legend">
+        <li class="k-known"><i></i>외웠어요 (연속으로 맞힘)</li>
+        <li class="cat-transition"><i style="background:linear-gradient(180deg,#fff 40%,var(--cat))"></i>연습 중</li>
+        <li class="k-weak"><i></i>최근에 놓침</li>
+        <li class="k-new"><i></i>아직 안 나옴</li>
+      </ul>
+      <ul class="pt-legend" id="cat-legend"></ul>
+      <div class="row-actions"><button class="btn btn-ghost" data-action="reset-dex">도감 기록 지우기</button></div>
+    </section>
+  </main>
+
+  <!-- 게임 -->
+  <main id="screen-game" class="screen" aria-labelledby="game-title">
+    <header class="topbar">
+      <button class="btn btn-ghost" data-action="quit">← 그만하기</button>
+      <h1 id="game-title">원소 비</h1>
+      <span class="tag" id="game-tag"></span>
+    </header>
+    <div class="game-layout">
+      <div>
+        <div class="hud">
+          <span class="score" id="hud-score">0</span>
+          <span class="combo" id="hud-combo"></span>
+          <span class="lives" id="hud-lives" aria-label="남은 생명"></span>
+          <span class="time" id="hud-time"></span>
+        </div>
+        <div class="song-strip" id="song-strip" hidden></div>
+        <div class="field" id="field"></div>
+        <div class="answer">
+          <input id="answer" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="정답 입력">
+          <button class="btn btn-primary" id="answer-btn">확인</button>
+        </div>
+        <p class="feedback" id="feedback" aria-live="polite"></p>
+      </div>
+      <aside class="side">
+        <section class="card">
+          <h2>기억 카드</h2>
+          <p class="muted small" id="memo-empty">놓친 원소는 여기에 카드로 나타나요.</p>
+          <ul class="memo-list" id="memo-list"></ul>
+        </section>
+        <section class="card">
+          <h2>규칙</h2>
+          <p class="small">정답을 입력하고 <strong>Enter</strong>(또는 스페이스)! 원소 기호는 <strong>첫 글자만 대문자</strong>예요(Na, Cl). 빨리 맞힐수록, 콤보가 이어질수록 점수가 커져요. 바닥에 닿으면 ❤️ 하나가 줄어요.</p>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <!-- 결과 -->
+  <main id="screen-end" class="screen" aria-labelledby="end-title">
+    <h1 id="end-title" class="end-title">게임 끝!</h1>
+    <p class="new-best" id="new-best" hidden>🎉 최고 기록!</p>
+    <section class="card">
+      <div class="stat-row">
+        <div class="stat"><b id="r-score">0</b><span>점수</span></div>
+        <div class="stat"><b id="r-correct">0</b><span>맞힌 원소</span></div>
+        <div class="stat"><b id="r-acc">-</b><span>정확도</span></div>
+        <div class="stat"><b id="r-combo">0</b><span>최대 콤보</span></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>오답 노트</h2>
+      <p class="muted" id="notes-empty">놓친 원소가 없어요. 완벽해요! 🎉</p>
+      <ul class="note-list" id="notes"></ul>
+    </section>
+    <div class="row-actions center">
+      <button class="btn btn-primary btn-lg" data-action="again">다시 하기</button>
+      <button class="btn btn-lg" data-action="retry-missed" id="btn-retry-missed">놓친 원소만 다시</button>
+      <button class="btn btn-lg" data-action="home">처음으로</button>
+    </div>
+  </main>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="js/elements.js"></script>
+  <script src="js/learn.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/solo.js"></script>
+</body>
+</html>

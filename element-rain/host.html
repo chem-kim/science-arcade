@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>원소 비 · 진행자</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="host">
+  <!-- 연결 불가 -->
+  <main id="screen-error" class="screen" aria-labelledby="error-title">
+    <section class="card center">
+      <h1 id="error-title">연결 설정이 필요해요</h1>
+      <p>Firebase 설정(js/firebase-config.js)이 아직 없습니다.</p>
+      <p class="muted">같은 컴퓨터에서 미리 테스트하려면 주소 끝에 <code>?net=local</code> 을 붙여 여세요.</p>
+      <a class="btn" href="index.html">처음으로</a>
+    </section>
+  </main>
+
+  <!-- 방 만들기 -->
+  <main id="screen-create" class="screen" aria-labelledby="create-title">
+    <header class="topbar">
+      <a class="btn btn-ghost" href="index.html" data-keep-net>← 처음으로</a>
+      <h1 id="create-title">원소 비 대전 · 방 만들기</h1>
+    </header>
+    <section class="card center">
+      <p>방을 만들면 학생들이 QR 코드나 방 코드로 들어와요.<br>범위·문제·시간은 대기실에서 고를 수 있어요.</p>
+      <div class="row-actions center">
+        <button class="btn btn-primary btn-lg" data-action="create-room">방 만들기</button>
+      </div>
+      <p class="resume" id="resume-box" hidden>
+        진행 중이던 방 <strong id="resume-code"></strong>이(가) 있어요.
+        <button class="btn" data-action="resume-room">이어하기</button>
+      </p>
+    </section>
+  </main>
+
+  <!-- 대기실 -->
+  <main id="screen-lobby" class="screen" aria-labelledby="lobby-title">
+    <header class="topbar">
+      <h1 id="lobby-title">대기실</h1>
+      <button class="btn btn-ghost" data-action="close-room">방 닫기</button>
+    </header>
+    <div class="lobby-layout">
+      <section class="card join-card">
+        <p class="muted">방 코드</p>
+        <p class="room-code" id="room-code"></p>
+        <div class="qr" id="qr" aria-hidden="true"></div>
+        <p class="join-url" id="join-url"></p>
+      </section>
+      <div>
+        <section class="card">
+          <h2>게임 설정</h2>
+          <div class="opt">
+            <p class="opt-label">범위</p>
+            <div class="pills" role="radiogroup" aria-label="범위">
+              <label class="pill"><input type="radio" name="level" value="basic" checked><span>기초 <small>1~20번</small></span></label>
+              <label class="pill"><input type="radio" name="level" value="challenge"><span>도전 <small>1~36번+α</small></span></label>
+              <label class="pill"><input type="radio" name="level" value="all"><span>마스터 <small>전체</small></span></label>
+            </div>
+          </div>
+          <div class="opt">
+            <p class="opt-label">문제</p>
+            <div class="pills" role="radiogroup" aria-label="문제 유형">
+              <label class="pill"><input type="radio" name="qtype" value="name2sym" checked><span>이름 → 기호</span></label>
+              <label class="pill"><input type="radio" name="qtype" value="sym2name"><span>기호 → 이름</span></label>
+              <label class="pill"><input type="radio" name="qtype" value="num2sym"><span>번호 → 기호</span></label>
+            </div>
+          </div>
+          <div class="opt">
+            <p class="opt-label">시간</p>
+            <div class="pills" role="radiogroup" aria-label="게임 시간">
+              <label class="pill"><input type="radio" name="duration" value="60"><span>1분</span></label>
+              <label class="pill"><input type="radio" name="duration" value="90" checked><span>1분 30초</span></label>
+              <label class="pill"><input type="radio" name="duration" value="120"><span>2분</span></label>
+            </div>
+          </div>
+          <p class="muted small">모든 학생에게 같은 순서로 원소가 떨어지고, ❤️ 5개가 모두 없어지면 그때까지의 점수로 끝나요.</p>
+        </section>
+        <section class="card">
+          <h2>참가자 <span class="count" id="lobby-count">0</span></h2>
+          <ul class="player-chips" id="lobby-players"></ul>
+          <div class="row-actions">
+            <button class="btn btn-primary btn-lg" data-action="start-game" id="btn-start-game" disabled>게임 시작</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- 진행 -->
+  <main id="screen-game" class="screen" aria-labelledby="game-title">
+    <header class="topbar">
+      <h1 id="game-title">원소 비 대전 <span class="tag" id="game-code"></span></h1>
+      <span class="tag" id="game-settings"></span>
+    </header>
+    <div class="host-layout">
+      <section class="card">
+        <h2>실시간 순위</h2>
+        <ol class="live-rank" id="live-rank"></ol>
+      </section>
+      <div>
+        <section class="card">
+          <p class="big-timer" id="big-timer">0:00</p>
+          <div class="timer-bar"><span id="timer-bar"></span></div>
+          <div class="row-actions center" style="margin-top:14px">
+            <button class="btn" data-action="end-game">지금 끝내기</button>
+          </div>
+        </section>
+        <section class="card">
+          <h2>지금 많이 놓치는 원소</h2>
+          <p class="muted small" id="live-hard-empty">아직 없어요.</p>
+          <ul class="memo-list" id="live-hard"></ul>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- 종료 -->
+  <main id="screen-end" class="screen" aria-labelledby="end-title">
+    <h1 id="end-title" class="end-title">게임 종료!</h1>
+    <div class="champion" id="champion"></div>
+    <div class="podium" id="podium"></div>
+    <section class="card">
+      <h2>우리 반이 많이 놓친 원소</h2>
+      <p class="muted" id="hard-empty">놓친 원소가 없어요. 모두 대단해요! 🎉</p>
+      <ul class="note-list" id="hardest"></ul>
+    </section>
+    <section class="card">
+      <h2>전체 순위</h2>
+      <table class="result-table">
+        <thead><tr><th>순위</th><th>이름</th><th>점수</th><th>맞힘</th><th>오답</th><th>최대 콤보</th></tr></thead>
+        <tbody id="result-body"></tbody>
+      </table>
+    </section>
+    <div class="row-actions center">
+      <button class="btn btn-primary btn-lg" data-action="rematch">같은 친구들과 한 판 더</button>
+      <button class="btn btn-lg" data-action="new-game">방 닫고 새 방 만들기</button>
+    </div>
+  </main>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/elements.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/net.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/host.js"></script>
+</body>
+</html>

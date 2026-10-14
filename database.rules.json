@@ -25,6 +25,26 @@
           }
         }
       }
+    },
+    "element-rain": {
+      "rooms": {
+        ".read": true,
+        ".indexOn": ["meta/createdAt"],
+        "$code": {
+          ".write": true,
+          ".validate": "$code.matches(/^[0-9]{4}$/)",
+          "meta": {
+            ".validate": "newData.hasChildren(['createdAt'])"
+          },
+          "players": {
+            "$pid": {
+              ".validate": "$pid.matches(/^[a-z0-9]{4,12}$/)",
+              "name": { ".validate": "newData.isString() && newData.val().length <= 10" },
+              "score": { ".validate": "newData.isNumber()" }
+            }
+          }
+        }
+      }
     }
   }
 }

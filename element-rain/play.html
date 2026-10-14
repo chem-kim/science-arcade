@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>원소 비 · 참가</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="player">
+  <!-- 연결 불가 -->
+  <main id="screen-error" class="screen" aria-labelledby="error-title">
+    <section class="card center">
+      <h1 id="error-title">연결 설정이 필요해요</h1>
+      <p>선생님께 알려주세요. (Firebase 설정 없음)</p>
+    </section>
+  </main>
+
+  <!-- 입장 -->
+  <main id="screen-join" class="screen" aria-labelledby="join-title">
+    <header class="hero">
+      <p class="eyebrow">SCIENCE ARCADE</p>
+      <h1 id="join-title">원소 <span class="grad">비</span> 대전</h1>
+    </header>
+    <form class="card join-form" id="join-form" novalidate>
+      <label for="in-code">방 코드</label>
+      <input id="in-code" name="code" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" placeholder="4자리 숫자" required>
+      <label for="in-name">닉네임</label>
+      <input id="in-name" name="name" maxlength="10" autocomplete="nickname" placeholder="실명 대신 닉네임도 좋아요" required>
+      <button class="btn btn-primary btn-lg" type="submit">입장하기</button>
+      <p class="form-error" id="join-error" role="alert"></p>
+    </form>
+  </main>
+
+  <!-- 대기 -->
+  <main id="screen-wait" class="screen" aria-labelledby="wait-title">
+    <section class="card wait-card">
+      <div class="orbit" aria-hidden="true"><span></span><span></span></div>
+      <h1 id="wait-title"><span id="me-name"></span>님, 입장 완료!</h1>
+      <p class="muted">선생님이 시작하면 원소가 떨어지기 시작해요.</p>
+      <div class="settings-line" id="wait-settings"></div>
+      <ul class="player-chips" id="wait-players"></ul>
+      <p class="small muted">원소 기호는 <strong>첫 글자만 대문자</strong>(Na, Cl) · 입력하고 <strong>Enter</strong></p>
+    </section>
+  </main>
+
+  <!-- 진행 중에 들어옴 -->
+  <main id="screen-late" class="screen" aria-labelledby="late-title">
+    <section class="card wait-card">
+      <div class="orbit" aria-hidden="true"><span></span><span></span></div>
+      <h1 id="late-title">게임이 진행 중이에요</h1>
+      <p class="muted">이번 판이 끝나면 다음 판부터 함께할 수 있어요.</p>
+    </section>
+  </main>
+
+  <!-- 게임 -->
+  <main id="screen-game" class="screen" aria-labelledby="game-title">
+    <header class="topbar">
+      <h1 id="game-title">원소 비 대전</h1>
+      <span class="tag" id="game-tag"></span>
+    </header>
+    <div class="game-layout">
+      <div>
+        <div class="hud">
+          <span class="score" id="hud-score">0</span>
+          <span class="combo" id="hud-combo"></span>
+          <span class="lives" id="hud-lives" aria-label="남은 생명"></span>
+          <span class="rank" id="hud-rank"></span>
+          <span class="time" id="hud-time"></span>
+        </div>
+        <div class="field" id="field"></div>
+        <div class="answer">
+          <input id="answer" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="정답 입력">
+          <button class="btn btn-primary" id="answer-btn">확인</button>
+        </div>
+        <p class="feedback" id="feedback" aria-live="polite"></p>
+      </div>
+      <aside class="side">
+        <section class="card">
+          <h2>실시간 순위</h2>
+          <ol class="live-rank" id="live-rank"></ol>
+        </section>
+        <section class="card">
+          <h2>기억 카드</h2>
+          <p class="muted small" id="memo-empty">놓친 원소는 여기에 카드로 나타나요.</p>
+          <ul class="memo-list" id="memo-list"></ul>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <!-- 종료 -->
+  <main id="screen-end" class="screen" aria-labelledby="end-title">
+    <h1 id="end-title" class="end-title">게임 종료!</h1>
+    <div class="champion" id="champion"></div>
+    <p class="my-result" id="my-result"></p>
+    <div class="podium" id="podium"></div>
+    <section class="card">
+      <h2>내 오답 노트</h2>
+      <p class="muted" id="notes-empty">놓친 원소가 없어요. 완벽해요! 🎉</p>
+      <ul class="note-list" id="notes"></ul>
+    </section>
+    <section class="card">
+      <h2>전체 순위</h2>
+      <table class="result-table">
+        <thead><tr><th>순위</th><th>이름</th><th>점수</th><th>맞힘</th><th>오답</th><th>최대 콤보</th></tr></thead>
+        <tbody id="result-body"></tbody>
+      </table>
+    </section>
+    <p class="next-hint">선생님이 “한 판 더”를 누르면 같은 방에서 다시 시작해요.</p>
+  </main>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/elements.js"></script>
+  <script src="js/learn.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/net.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/player.js"></script>
+</body>
+</html>
