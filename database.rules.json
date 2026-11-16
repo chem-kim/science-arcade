@@ -73,6 +73,21 @@
             }
           }
         }
+      },
+      "results": {
+        ".read": true,
+        "$rid": {
+          ".write": true,
+          ".validate": "$rid.matches(/^[0-9]{8}-[0-9]{4}$/)",
+          "meta": {
+            ".validate": "newData.hasChildren(['title', 'date', 'createdAt'])"
+          },
+          "q": {
+            "$qid": {
+              ".validate": "$qid.matches(/^[0-9]{1,2}-[0-9]{2}$/) && newData.hasChildren(['a', 'n']) && newData.child('a').isString() && newData.child('a').val().length <= 3000"
+            }
+          }
+        }
       }
     }
   }
